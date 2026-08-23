@@ -1,0 +1,16 @@
+audit/
+.agents/
+.codex/
+.env
+.env.*
+.idea/
+.vscode/
+salary-packages*.json
+*.key
+*.log
+*.pem
+*.tmp
+*.bak
+Thumbs.db
+Desktop.ini
+.DS_Store
