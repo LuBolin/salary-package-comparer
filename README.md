@@ -13,6 +13,8 @@ Open [`index.html`](./index.html) directly in a modern browser. There is no buil
 - Add, duplicate, remove, and reorder offers.
 - Compare results in SGD or CNY with a configurable exchange rate and percentage baseline.
 - Switch between cash take-home, cash after costs, and cash plus CPF/住房公积金 personal-account value.
+- Under Living costs & allowances, enter One-time expenses / year for travel or other annual spending. Use each offer's currency. The amount is counted once in annual living costs and reduces cash after costs and total value. Older saves and imports default to zero.
+- 在生活成本与公司补贴中，填写每年一次性支出，例如旅行费用。使用各方案的原币种；该金额每年只计入生活成本一次，并减少扣除成本后的现金与总价值。旧存档和导入数据默认此项为零。
 - Data is saved only in browser `localStorage`; JSON export/import makes it portable.
 - Use the EN/中文 switch to change the complete interface and assumptions.
 
