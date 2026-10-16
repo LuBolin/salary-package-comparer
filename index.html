@@ -47,6 +47,7 @@
     .panel, .scenario { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
     .panel { padding: 20px; }
     .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .summary .panel-head { flex-wrap: wrap; }
     .panel-head span { color: var(--muted); font-size: 12px; }
     .compare-tools { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
     .compare-tools label { min-width: 130px; }
@@ -56,14 +57,18 @@
     .bar-label { min-width: 0; }
     .bar-label strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .bar-label small { color: var(--muted); }
-    .track { height: 13px; border-radius: 99px; background: color-mix(in srgb, var(--line) 65%, transparent); overflow: hidden; }
-    .fill { height: 100%; border-radius: inherit; background: var(--accent); transition: width .25s ease; }
+    .bar-row .field-help { margin: 0; }
+    .track { position: relative; height: 13px; border-radius: 99px; background: color-mix(in srgb, var(--line) 65%, transparent); overflow: hidden; }
+    .track::before { content: ''; position: absolute; left: var(--zero); height: 100%; border-left: 1px solid var(--muted); }
+    .fill { position: absolute; height: 100%; border-radius: inherit; background: var(--accent); transition: width .25s ease; }
     .fill.sg { background: var(--sg); }
     .fill.cn { background: var(--cn); }
     .bar-value { text-align: right; font-variant-numeric: tabular-nums; font-weight: 750; }
     .bar-value small { display: block; color: var(--muted); font-weight: 500; }
     .headline-number { font-size: clamp(26px, 4vw, 36px); font-weight: 700; line-height: 1; letter-spacing: -.025em; }
     .headline-label { color: var(--muted); margin-top: 8px; }
+    .difference-row + .difference-row { margin-top: 20px; }
+    .difference-row strong { display: block; margin-bottom: 8px; }
     .scenario-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 18px; }
     .scenario { overflow: hidden; }
     .scenario-top { padding: 16px 18px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: center; }
@@ -74,12 +79,15 @@
     .location { width: 126px; margin-left: auto; }
     .inputs { padding: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
     .wide { grid-column: 1 / -1; }
-    .money-input { position: relative; }
-    .money-input span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
-    .money-input input { padding-left: 44px; }
+    .money-input { display: flex; align-items: baseline; gap: 8px; padding-left: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+    .money-input span { flex: none; color: var(--muted); pointer-events: none; }
+    .money-input input { min-width: 0; border: 0; padding-left: 0; background: transparent; }
+    .money-input:focus-within { outline: 3px solid color-mix(in srgb, var(--accent) 25%, transparent); outline-offset: 1px; }
+    .money-input input:focus { outline: none; }
     details { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 10px; }
     summary { cursor: pointer; color: var(--muted); font-weight: 700; }
     .simple-settings, .advanced { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+    .location-fields.simple-settings { margin-top: 0; align-items: center; }
     .advanced-overrides { grid-column: 1 / -1; border-top: 0; padding-top: 2px; }
     .advanced-overrides summary { font-size: 12px; font-weight: 650; }
     .result { padding: 18px; background: color-mix(in srgb, var(--accent-soft) 48%, var(--surface)); border-top: 1px solid var(--line); }
@@ -92,7 +100,13 @@
     .metric span { display: block; color: var(--muted); font-size: 11px; }
     .metric strong { display: block; font-size: 14px; font-variant-numeric: tabular-nums; }
     .pension-note { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .pension-note p { margin: 0; }
+    .pension-note p + p { margin-top: 8px; }
     .account-value { color: var(--accent); }
+    .retirement-settings { padding: 12px 18px; }
+    .oa-choice { min-width: 0; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+    .oa-choice legend { color: var(--muted); font-size: 12px; font-weight: 650; }
+    .oa-choice label + label { margin-top: 10px; }
     .adjusted-line { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
     .adjusted-line span { color: var(--muted); }
     .adjusted-line strong { font-size: 20px; }
@@ -152,18 +166,20 @@
     <section class="summary" aria-label="Comparison summary">
       <div class="panel">
         <div class="panel-head">
-          <h2 id="bars-title">Annual take-home</h2>
+          <h2 id="bars-title">Cash left after costs</h2>
           <div class="compare-tools">
-            <label><span data-i18n="compare">Compare</span><select id="compare-metric"><option value="adjustedTakeHome" data-i18n="afterCosts">After costs & allowances</option><option value="takeHome" data-i18n="cashTakeHome">Cash take-home</option><option value="adjustedTotalValue" data-i18n="cashAndAccounts">Cash + personal accounts</option></select></label>
+            <label><span data-i18n="compare">Compare</span><select id="compare-metric"><option value="adjustedTakeHome" data-i18n="cashLeft">Cash left after costs</option><option value="adjustedTotalValue" data-i18n="cashPlusFunds">Cash after costs + CPF / housing fund</option><option value="retirementIncome" data-i18n="retirementIncome">Estimated retirement income / year</option><option value="takeHome" data-i18n="cashTakeHome">Cash take-home</option><option value="account" data-i18n="fundContributions">CPF / housing-fund contributions</option></select></label>
             <label><span data-i18n="displayAs">Display as</span><select id="display-currency"><option value="CNY">CNY</option><option value="SGD">SGD</option></select></label>
             <label><span data-i18n="percentageVs">Percentage vs</span><select id="baseline-offer"></select></label>
           </div>
         </div>
         <div id="bars" class="bars" aria-live="polite"></div>
+        <p id="metric-help" class="field-help"></p>
+        <p id="bonus-assumption" class="field-help" data-i18n="bonusAssumption">The bonus is assumed paid in full. Set total months of pay to 12 to check a no-bonus scenario.</p>
       </div>
       <div class="panel">
-        <div class="panel-head"><h2 id="best-title">Best adjusted offer</h2><span id="best-context">After tax, costs, and allowances</span></div>
-        <div id="best" aria-live="polite"></div>
+        <div class="panel-head"><h2 data-i18n="annualDifference">Annual difference</h2><span id="baseline-name"></span></div>
+        <div id="differences" aria-live="polite"></div>
       </div>
     </section>
 
@@ -172,7 +188,7 @@
     <section class="panel comparison">
       <div class="panel-head"><h2 data-i18n="sideBySide">Side-by-side</h2><span data-i18n="nativeAnnual">Native currency · annual</span></div>
       <div class="table-wrap"><table>
-        <thead><tr><th data-i18n="offer">Offer</th><th data-i18n="gross">Gross</th><th data-i18n="tax">Tax</th><th data-i18n="employeeContributions">Employee contributions</th><th data-i18n="takeHome">Take-home</th><th data-i18n="livingCosts">Living costs</th><th data-i18n="allowances">Allowances</th><th data-i18n="afterCostsShort">After costs</th><th data-i18n="personalAccounts">Personal accounts</th><th data-i18n="employerContributions">Employer contributions</th><th data-i18n="employerCost">Total employer cost</th></tr></thead>
+        <thead><tr><th data-i18n="offer">Offer</th><th data-i18n="gross">Gross</th><th data-i18n="tax">Tax</th><th data-i18n="employeeContributions">Employee contributions</th><th data-i18n="takeHome">Take-home</th><th data-i18n="livingCosts">Living costs</th><th data-i18n="allowances">Allowances</th><th data-i18n="cashLeft">Cash left after costs</th><th data-i18n="fundContributions">CPF / housing-fund contributions</th><th data-i18n="includedFunds">Funds included in combined total</th><th data-i18n="cashPlusFunds">Cash after costs + CPF / housing fund</th><th data-i18n="retirementIncome">Estimated retirement income / year</th><th data-i18n="employeeInsurance">Employee social insurance</th><th data-i18n="employerInsurance">Employer social insurance</th><th data-i18n="employerContributions">Employer contributions</th></tr></thead>
         <tbody id="comparison-body"></tbody>
       </table></div>
     </section>
@@ -210,8 +226,15 @@
         <label><span data-i18n="monthlyPay">Monthly base pay</span><div class="money-input"><span class="currency">SGD</span><input class="monthly" type="number" min="0" step="100" inputmode="decimal"></div></label>
         <label><span data-i18n="monthsOfPay">Total months of pay</span><input class="months" type="number" min="12" max="24" step="0.1" inputmode="decimal"></label>
         <p class="bonus-equivalent field-help wide"></p>
-        <div class="location-fields sg-fields wide">
+        <div class="location-fields sg-fields wide simple-settings">
           <label><span data-i18n="taxStatus">Tax status</span><select class="sg-tax-status"><option value="resident" data-i18n="resident">Resident</option><option value="nonresident" data-i18n="nonresident">Non-resident</option></select></label>
+          <label class="check-label"><input class="sg-cpf-eligible" type="checkbox"><span><span data-i18n="sgCpfEligible">Singapore citizen / PR</span><small data-i18n="sgCpfHelp">Turn off for a foreign employee who is not a permanent resident. Tax residency is separate.</small></span></label>
+        </div>
+        <div class="location-fields sg-fields wide simple-settings sg-cpf-choice-fields">
+          <label><span data-i18n="cpfIncluded">CPF included in cash + funds</span><select class="sg-cpf-portion"><option value="all" data-i18n="cpfAll">All CPF accounts</option><option value="oa" data-i18n="cpfOaOnly">Housing only: Ordinary Account</option><option value="custom" data-i18n="cpfCustom">Custom percentage of total CPF</option></select></label>
+          <label><span data-i18n="cpfAgeBand">Current CPF age band</span><select class="sg-cpf-age-band"><option value="35" data-i18n="cpfAge35">35 and below</option><option value="45">36–45</option><option value="50">46–50</option><option value="55">51–55</option><option value="60">56–60</option><option value="65">61–65</option><option value="70">66–70</option><option value="120" data-i18n="cpfAgeOver70">Above 70</option></select></label>
+          <label class="wide sg-cpf-custom-field" hidden><span data-i18n="cpfCustomPercent">Percentage of total CPF to include %</span><input class="sg-cpf-share" type="number" min="0" max="100" step="1"></label>
+          <p class="field-help wide"><span data-i18n="cpfPortionHelp"></span> <a href="https://www.cpf.gov.sg/content/dam/web/employer/employer-obligations/documents/CPFAllocationRatesfromJanuary2026.pdf" target="_blank" rel="noreferrer" data-i18n="cpfAllocationSource">2026 allocation rates</a></p>
         </div>
         <div class="location-fields cn-fields wide">
           <label class="check-label"><input class="cn-bonus-eligible" type="checkbox"><span><span data-i18n="eligibleBonus">Eligible one-time annual bonus</span><small data-i18n="eligibleBonusHelp">For a qualifying lump-sum year-end bonus. The calculator uses the cheaper permitted tax method.</small></span></label>
@@ -221,8 +244,8 @@
           <summary data-i18n="contributionAssumptions">Contribution assumptions</summary>
           <div class="simple-settings sg-fields">
             <label class="wide"><span data-i18n="otherReliefs">Other annual tax reliefs</span><input class="sg-reliefs" type="number" min="0" step="100"></label>
-            <p class="field-help wide"><span data-i18n="cpfHelp">Uses standard 2026 CPF rates and ceilings for a citizen or third-year PR aged 55 or below.</span> <a href="#assumptions" data-i18n="sources">Sources</a></p>
-            <details class="advanced-overrides">
+            <p class="field-help wide"><span data-i18n="cpfHelp">Uses standard 2026 CPF rates for the selected current age band, for a citizen or third-year PR. Overrides remain available.</span> <a href="#assumptions" data-i18n="sources">Sources</a></p>
+            <details class="advanced-overrides sg-cpf-overrides">
               <summary data-i18n="overrideCpf">Override CPF rates and ceilings</summary>
               <div class="advanced">
                 <label><span data-i18n="employeeCpf">Employee CPF %</span><input class="sg-employee-rate" type="number" min="0" max="40" step="0.5"></label>
@@ -241,10 +264,10 @@
               <div class="advanced">
                 <label><span data-i18n="employeeSocial">Employee social %</span><input class="cn-employee-social" type="number" min="0" max="50" step="0.1"></label>
                 <label><span data-i18n="employerSocial">Employer social %</span><input class="cn-employer-social" type="number" min="0" max="60" step="0.1"></label>
-                <label><span data-i18n="socialMin">Social base minimum</span><input class="cn-social-min" type="number" min="0" step="10"></label>
-                <label><span data-i18n="socialMax">Social base maximum</span><input class="cn-social-max" type="number" min="0" step="10"></label>
+                <label><span data-i18n="socialMin">Social base minimum</span><input class="cn-social-min" type="number" min="0" step="1"></label>
+                <label><span data-i18n="socialMax">Social base maximum</span><input class="cn-social-max" type="number" min="0" step="1"></label>
                 <label><span data-i18n="housingMin">住房公积金 base minimum</span><input class="cn-housing-min" type="number" min="0" step="10"></label>
-                <label><span data-i18n="housingMax">住房公积金 base maximum</span><input class="cn-housing-max" type="number" min="0" step="10"></label>
+                <label><span data-i18n="housingMax">住房公积金 base maximum</span><input class="cn-housing-max" type="number" min="0" step="1"></label>
               </div>
             </details>
           </div>
@@ -255,13 +278,51 @@
             <label><span data-i18n="housingCost">Housing cost / month</span><div class="money-input"><span class="currency">SGD</span><input class="housing-cost" type="number" min="0" step="50"></div></label>
             <label><span data-i18n="housingAllowance">Company housing allowance / month</span><div class="money-input"><span class="currency">SGD</span><input class="housing-allowance" type="number" min="0" step="50"></div></label>
             <label><span data-i18n="foodCost">Food cost / week</span><div class="money-input"><span class="currency">SGD</span><input class="food-cost" type="number" min="0" step="10"></div></label>
-            <label><span data-i18n="annualExpenses">One-time expenses / year</span><div class="money-input"><span class="currency">SGD</span><input class="annual-expenses" type="number" min="0" step="0.01"></div><span class="field-help" data-i18n="annualExpensesHelp">Total yearly spending on things like travel. Counted once in living costs.</span></label>
+            <label><span data-i18n="otherMonthlyCosts">Other costs / month</span><div class="money-input"><span class="currency">SGD</span><input class="other-monthly-costs" type="number" min="0" step="50"></div></label>
+            <label><span data-i18n="annualExpenses">One-time expenses / year</span><div class="money-input"><span class="currency">SGD</span><input class="annual-expenses" type="number" min="0" step="0.01"></div></label>
+            <p class="field-help wide" data-i18n="costsHelp">Include transport, utilities and personal spending in other monthly costs; use annual expenses for travel or moving. Enter each cost once, in the offer's currency.</p>
             <label class="wide"><span data-i18n="notes">Notes</span><input class="allowance-notes" type="text" placeholder="e.g. Health insurance included" data-i18n-placeholder="notesPlaceholder"></label>
             <p class="field-help wide" data-i18n="allowanceHelp">Describe non-cash benefits in Notes. Enter taxable cash allowances as pay.</p>
           </div>
         </details>
       </div>
       <div class="result" aria-live="polite"></div>
+      <details class="retirement-settings">
+        <summary data-i18n="retirementAssumptions">Retirement income estimate & assumptions</summary>
+        <div class="simple-settings sg-fields">
+          <fieldset class="wide oa-choice">
+            <legend data-i18n="oaChoice">After funding RA up to the limit</legend>
+            <label class="check-label"><input class="sg-oa-mode" type="radio" value="withdraw"><span data-i18n="oaWithdraw">1. Withdraw the excess as cash and spread it over retirement</span></label>
+            <label class="check-label"><input class="sg-oa-mode" type="radio" value="keep"><span data-i18n="oaKeep">2. Keep the excess in OA earning interest and withdraw gradually</span></label>
+            <p class="field-help oa-choice-note" aria-live="polite"></p>
+          </fieldset>
+          <label><span data-i18n="oaEndAge">Life expectancy / OA spending end age</span><input class="sg-oa-end-age" type="number" min="66" max="120" step="1"></label>
+        </div>
+        <div class="retirement-result" aria-live="polite"></div>
+        <p class="field-help cn-fields"><span data-i18n="pensionLifetimeHelp"></span> <a href="https://rsj.sh.gov.cn/trdhy_17355/20211015/t0035_1403121.html" target="_blank" rel="noreferrer" data-i18n="pensionLifetimeSource">Lifetime pension rules</a></p>
+        <p class="field-help" data-i18n="retirementModelHelp"></p>
+        <div class="simple-settings">
+          <label><span data-i18n="projectionAge">Projection start age</span><input class="retirement-current-age" type="number" min="16" max="70" step="1"></label>
+          <label><span data-i18n="stopWorkAge">Stop working at age</span><input class="retirement-stop-age" type="number" min="16" max="70" step="1"></label>
+          <label><span data-i18n="retirementAge">Pension payout start age</span><input class="retirement-age" type="number" min="40" max="70" step="1"></label>
+          <label><span data-i18n="retirementBalance">Existing retirement savings</span><div class="money-input"><span class="currency">SGD</span><input class="retirement-balance" type="number" min="0" step="1000"></div></label>
+          <label><span data-i18n="retirementGrowth">Annual pension account interest %</span><input class="retirement-growth" type="number" min="0" max="10" step="0.25"></label>
+          <label class="sg-fields"><span data-i18n="cpfPayoutMode">CPF LIFE estimate method</span><select class="sg-cpf-payout-mode"><option value="auto" data-i18n="cpfPayoutAuto">Automatic reference estimate</option><option value="manual" data-i18n="cpfPayoutManual">Custom monthly estimate</option></select></label>
+          <label class="sg-fields sg-cpf-manual-field" hidden><span data-i18n="cpfLifeMonthly">Monthly CPF LIFE payout at income start age</span><div class="money-input"><span class="currency">SGD</span><input class="sg-cpf-life-monthly" type="number" min="0" step="0.01" data-i18n-placeholder="cpfLifePlaceholder" placeholder="Enter official planner estimate"></div></label>
+          <label class="sg-fields"><span data-i18n="cpfRetirementSum">Retirement Account transfer target at 55</span><div class="money-input"><span class="currency">SGD</span><input class="sg-retirement-sum" type="number" min="0" step="100"></div></label>
+          <label class="sg-fields"><span data-i18n="oaRetained">Future OA deposits kept for retirement %</span><input class="sg-oa-retained" type="number" min="0" max="100" step="5"></label>
+          <label class="cn-fields"><span data-i18n="pastPensionYears">China pension years already paid</span><input class="cn-past-pension-years" type="number" min="0" max="54" step="1"></label>
+          <label class="cn-fields"><span data-i18n="pastPensionIndex">Past average contribution index</span><input class="cn-past-pension-index" type="number" min="0" max="3" step="0.1"></label>
+          <label class="cn-fields wide"><span data-i18n="cnAverageWage">Shanghai average monthly wage, CNY</span><input class="cn-average-wage" type="number" min="1" step="1"></label>
+        </div>
+        <p class="field-help sg-fields" data-i18n="oaPlanHelp"></p>
+        <p class="field-help sg-fields"><span data-i18n="cpfInterestHelp"></span> <a href="https://www.cpf.gov.sg/service/article/what-are-the-cpf-interest-rates" target="_blank" rel="noreferrer" data-i18n="interestSource">Interest rate source</a></p>
+        <p class="field-help cn-fields"><span data-i18n="cnInterestHelp"></span> <a href="https://www.fcgs.gov.cn/ggfw/zxbs/shbz/wyk/cbdj/t26140285.shtml" target="_blank" rel="noreferrer" data-i18n="interestSource">Interest rate source</a></p>
+        <p class="field-help sg-fields"><span data-i18n="cpfProjectionHelp"></span> <a href="https://www.cpf.gov.sg/member/retirement-income/about-cpf-planner-retirement-income" target="_blank" rel="noreferrer" data-i18n="cpfPlanner">Official CPF LIFE planner</a> · <a href="https://www.cpf.gov.sg/content/dam/web/employer/employer-obligations/documents/CPFAllocationRatesfromJanuary2026.pdf" target="_blank" rel="noreferrer" data-i18n="cpfAllocationSource">2026 allocation rates</a> · <a href="https://www.cpf.gov.sg/content/dam/web/employer/employer-obligations/documents/CPFcontributionratesfrom1Jan2026.pdf" target="_blank" rel="noreferrer" data-i18n="cpfRatesSource">2026 contribution rates</a></p>
+        <p class="field-help cn-fields"><span data-i18n="cnProjectionHelp"></span> <a href="https://rsj.sh.gov.cn/tyljjfbf_17557/20260911/t0035_1443672.html" target="_blank" rel="noreferrer" data-i18n="pensionFormulaSource">Shanghai pension formula</a> · <a href="https://rsj.sh.gov.cn/tshbx_17729/20220117/t0035_1405188.html" target="_blank" rel="noreferrer" data-i18n="pensionDivisorSource">Payout divisors</a> · <a href="https://rsj.sh.gov.cn/tyljlqtj_17556/20240205/t0035_1421093.html" target="_blank" rel="noreferrer" data-i18n="pensionEligibilitySource">Eligibility rules</a></p>
+        <p class="field-help sg-fields"><a href="https://www.cpf.gov.sg/service/article/how-much-cpf-payouts-can-i-get-every-month" target="_blank" rel="noreferrer" data-i18n="cpfReferenceSource">Published CPF LIFE payout examples</a> · <a href="https://www.cpf.gov.sg/service/article/what-is-the-current-enhanced-retirement-sum" target="_blank" rel="noreferrer" data-i18n="ersSource">2026 RA funding limit</a></p>
+        <button class="reset-retirement ghost" type="button" data-i18n="resetRetirement">Use 25–50 projection defaults</button>
+      </details>
       <div class="scenario-actions">
         <button class="move-earlier ghost" type="button" data-i18n="moveEarlier">Move earlier</button>
         <button class="move-later ghost" type="button" data-i18n="moveLater">Move later</button>
@@ -274,10 +335,162 @@
   <script>
     const translations = {
       en: {
-        title: 'Compensation package comparer', subtitle: 'Compare cash take-home, taxes, living costs, CPF and 住房公积金 for Singapore and Shanghai offers.', profileLabel: 'Default model:', profileText: 'Singapore uses citizen CPF; Shanghai uses a China-local contract. All example inputs are fictional and editable.', fxLabel: '1 SGD in CNY', exportData: 'Export data', importData: 'Import data', addOffer: '+ Add offer', saved: 'Saved automatically', saveUnavailable: 'Browser save unavailable', imported: 'Data imported', importFailed: 'Could not import that file', compare: 'Compare', afterCosts: 'After costs & allowances', cashTakeHome: 'Cash take-home', cashAndAccounts: 'Cash + personal accounts', displayAs: 'Display as', percentageVs: 'Percentage vs', sideBySide: 'Side-by-side', nativeAnnual: 'Native currency · annual', offer: 'Offer', gross: 'Gross', tax: 'Tax', employeeContributions: 'Employee contributions', takeHome: 'Take-home', livingCosts: 'Living costs', allowances: 'Allowances', afterCostsShort: 'After costs', personalAccounts: 'Personal accounts', employerContributions: 'Employer contributions', employerCost: 'Total employer cost', assumptionsTitle: 'Model assumptions and official sources', singapore: 'Singapore', shanghai: 'Shanghai', monthlyPay: 'Monthly base pay', monthsOfPay: 'Total months of pay', taxStatus: 'Tax status', resident: 'Resident', nonresident: 'Non-resident', eligibleBonus: 'Eligible one-time annual bonus', eligibleBonusHelp: 'For a qualifying lump-sum year-end bonus. The calculator uses the cheaper permitted tax method.', contributionAssumptions: 'Contribution assumptions', otherReliefs: 'Other annual tax reliefs', cpfHelp: 'Uses standard 2026 CPF rates and ceilings for a citizen or third-year PR aged 55 or below.', sources: 'Sources', overrideCpf: 'Override CPF rates and ceilings', employeeCpf: 'Employee CPF %', employerCpf: 'Employer CPF %', owCeiling: 'Monthly OW ceiling', annualCpfCeiling: 'Annual CPF ceiling', housingFundRate: '住房公积金 rate (you and employer)', otherDeductions: 'Other annual tax deductions', chinaHousingHelp: 'Generic default: 7% each for standard 住房公积金.', whyDefaults: 'Why these defaults?', overrideShanghai: 'Override Shanghai rates and bases', employeeSocial: 'Employee social %', employerSocial: 'Employer social %', socialMin: 'Social base minimum', socialMax: 'Social base maximum', housingMin: '住房公积金 base minimum', housingMax: '住房公积金 base maximum', costsAllowances: 'Living costs & allowances', housingCost: 'Housing cost / month', housingAllowance: 'Company housing allowance / month', foodCost: 'Food cost / week', annualExpenses: 'One-time expenses / year', annualExpensesHelp: 'Total yearly spending on things like travel. Counted once in living costs.', notes: 'Notes', notesPlaceholder: 'e.g. Health insurance included', allowanceHelp: 'Describe non-cash benefits in Notes. Enter taxable cash allowances as pay.', moveEarlier: 'Move earlier', moveLater: 'Move later', duplicate: 'Duplicate', remove: 'Remove', annualTakeHome: 'Annual take-home', bestAdjusted: 'Best adjusted offer', bestCash: 'Best cash offer', bestTotal: 'Best total-value offer', afterTaxCosts: 'After tax, costs, and allowances', afterTaxDeductions: 'After tax + employee deductions', cashAccountsContext: 'After costs + CPF / 住房公积金 accounts', emptyOffers: 'Add an offer to begin.', noOffers: 'No offers yet.', baseline: 'Baseline', vsBaseline: 'vs baseline', annualCash12: 'Annual cash ÷ 12', averageMonth: 'Average base-pay month', bonusAfterTax: 'Year-end bonus after tax', incomeTax: 'Income tax', yourContributions: 'Your contributions', afterCostsAllowances: 'After living costs & allowances', companyOffsets: 'Company offsets', totalEmployerCost: 'Total employer cost', cpfAccount: 'CPF account', housingFundAccount: '住房公积金 account', you: 'you', employer: 'employer', socialInsurance: 'Social insurance', separateBonus: 'separate bonus', combinedIncome: 'combined income', monthsSplit: (bonus) => `12 monthly salaries + ${bonus} months paid as a separate year-end bonus.`, untitled: 'Untitled offer', copy: 'copy', offerN: n => `Offer ${n}`
+        ersSource: '2026 RA funding limit',
+        oaChoice: 'After funding RA up to the limit',
+        oaWithdraw: '1. Withdraw the excess as cash and spread it over retirement',
+        oaKeep: '2. Keep the excess in OA earning interest and withdraw gradually',
+        oaEndAge: 'Life expectancy / OA spending end age',
+        oaChoiceAvailable: (amount, age) => `Excess savings available for these choices at age ${age}: ${amount}.`,
+        oaChoiceEmpty: 'No excess remains after RA funding, so both choices give the same retirement income.',
+        oaNoneRetained: 'Future OA deposits kept for retirement is currently 0%, assuming all future OA deposits are used for housing. Change that percentage below if you expect to keep some.',
+        pensionLifetimeHelp: 'China pension payments continue for life once eligible. Your expected lifespan changes how many years you receive payments, not the annual pension estimate. The official payout divisor is not a payment deadline. Future pension adjustments are not modelled.',
+        pensionLifetimeSource: 'Lifetime pension rules',
+        oaPlanHelp: 'OA spending starts when work stops, or at 55 if later. Cash withdrawals assume no further interest; gradual OA withdrawals keep earning the 2.5% base rate on the remaining balance. Both spread the savings to your chosen end age. OA withdrawals are your own spending plan; CPF LIFE is the separate lifetime payment.',
+        oaAgeError: 'Choose a whole OA spending end age above the pension start age, up to 120.',
+        sgRetirementTotal: 'CPF LIFE + OA spending', cpfAnnualIncome: 'CPF LIFE / year', oaAnnualSpending: 'OA savings used / year',
+        oaAtStart: 'Excess savings at OA spending start', oaRemainingCash: 'Unspent withdrawn cash at pension start', oaRemainingAccount: 'OA balance remaining at pension start',
+        raFunding: 'RA funding before its own interest',
+        oaPlanPeriod: (start, end, amount) => `OA savings provide ${amount} per year from ${start} to ${end}.`,
+        oaAfterEnd: (end, amount) => `After ${end}, planned OA savings are spent; CPF LIFE continues at an estimated ${amount} per year for life.`,
+        oaBeforePension: (start, age, amount) => `Before CPF LIFE starts: OA savings provide ${amount} per year from ${start} to ${age}.`,
+        sgBridgePeriod: (stop, drawStart, age) => `${stop < drawStart ? `From ${stop} to ${drawStart}, this CPF plan provides no withdrawals; use other savings or income. ` : ''}Planned OA spending starts at ${drawStart}; CPF LIFE starts at ${age}.`,
+        raShortfall: (funded, limit) => `Available savings fund ${funded} of the ${limit} RA limit. No extra cash top-up is assumed.`,
+        sgIncomePeriod: (age, end) => `From ${age} to ${end}: CPF LIFE + planned OA withdrawals. CPF LIFE continues afterward.`,
+        interestSource: 'Interest rate source',
+        cpfInterestHelp: 'SA/RA retirement savings default to 4% annual interest. Retained OA earns 2.5%. New contributions at age 35 and below have a blended base rate of about 3.1% across all CPF accounts. Balance projections exclude extra-interest bonuses; CPF LIFE uses published payout examples.',
+        cnInterestHelp: 'The pension personal account defaults to 1.5% annual interest, using the published 2025 rate as a simple assumption for future years. The basic pension is calculated separately from wages and contribution years. Future rates can change.',
+        stopWorkAge: 'Stop working at age', cpfPayoutMode: 'CPF LIFE estimate method', cpfPayoutAuto: 'Automatic reference estimate', cpfPayoutManual: 'Custom monthly estimate',
+        cpfRetirementSum: 'RA funding limit, using the 2026 ERS', cpfReferenceSource: 'Published CPF LIFE payout examples', resetRetirement: 'Use 25–50 projection defaults',
+        cpfReferenceIncome: 'CPF LIFE reference estimate', cpfReferenceRange: 'Projected RA savings are outside the published reference range. Use a planner estimate instead.',
+        cpfRaBalance: 'Projected Retirement Account at payout age', cpfOtherBalance: 'Other unused CPF savings, excluded from pension',
+        savingsAtStop: 'Retirement savings when work stops',
+        workPeriod: (start, stop, age) => `Contributions from ${start} to ${stop}: ${stop - start} years. Pension starts at ${age}.`,
+        bridgePeriod: (stop, age) => `No salary or new contributions after ${stop}. The ${age - stop} years before pension starts need other savings or income.`,
+        cpfIncluded: 'CPF included in cash + funds', cpfAll: 'All CPF accounts', cpfOaOnly: 'Housing only: Ordinary Account', cpfCustom: 'Custom percentage of total CPF',
+        cpfAgeBand: 'Current CPF age band', cpfAge35: '35 and below', cpfAgeOver70: 'Above 70', cpfCustomPercent: 'Percentage of total CPF to include %',
+        cpfPortionHelp: 'OA is the housing-capable CPF account. Choose OA to compare housing contributions with China\'s housing fund. Changing age band loads standard 2026 contribution rates; rate overrides remain available. This selector changes only the combined comparison, not your CPF deductions or tax relief.',
+        includedFunds: 'Funds included in combined total', cpfOa: 'Ordinary Account / housing', cpfSpecial: 'Special / Retirement Account', cpfMedical: 'MediSave / healthcare',
+        cpfSplitHelp: 'Standard allocation before retirement-sum redirects. For a different actual OA allocation, use a custom percentage. Amounts include employee and employer deposits.',
+        selectedCpfNote: (part, percent, amount) => `CPF included: ${part} · ${percent}% of total CPF = ${amount}`,
+        cashPlusFunds: 'Cash after costs + CPF / housing fund',
+        combinedHelp: 'Annual cash left after costs + the CPF portion selected in each Singapore offer, or employee and employer housing-fund deposits for China. Choose housing-only OA for a housing-to-housing comparison. Fund deposits are restricted; retirement income stays separate.',
+        combinedShortHelp: 'Includes restricted CPF / housing-fund deposits. Retirement income is separate.',
+        retirementIncome: 'Estimated retirement income / year',
+        retirementUnavailable: 'Not estimated',
+        retirementHelp: 'Singapore shows CPF LIFE plus the selected spending from excess OA savings, until the chosen end age. Shanghai shows its basic and personal-account pension; housing funds remain separate. Salary is excluded. Each offer shows when payments start and which part lasts for life.',
+        retirementAssumptions: 'Retirement income estimate & assumptions',
+        retirementModelHelp: 'Default work period: 25–50. Contributions stop when work stops. Savings earn interest while kept in their accounts. No inflation adjustment. Pay, wage bases and current rules stay fixed. Cash saved from salary, China\'s housing fund and medical accounts are excluded. These ages affect this projection only.',
+        projectionAge: 'Start working / contributing at age', retirementAge: 'Pension payout start age',
+        retirementBalance: 'Existing retirement savings', retirementGrowth: 'Annual pension account interest %',
+        cpfLifeMonthly: 'Monthly CPF LIFE payout at income start age', cpfLifePlaceholder: 'Enter official planner estimate', oaRetained: 'Future OA deposits kept for retirement %',
+        pastPensionYears: 'China pension years already paid', pastPensionIndex: 'Past average contribution index', cnAverageWage: 'Shanghai average monthly wage, CNY',
+        cpfProjectionHelp: 'Starting savings are treated as unused SA/RA savings. Selected unused OA deposits earn 2.5% before retirement. From 55, available savings fund RA up to the chosen limit, defaulting to the 2026 ERS of S$440,800. RA interest can grow above this funding limit. Excess savings follow your OA choice. The 2026 limit stays fixed in this illustration. Automatic CPF LIFE uses published male Standard Plan examples, not a personal quote.',
+        cnProjectionHelp: 'Starting savings means the pension individual account, excluding housing and medical funds. Basic pension uses the projected contribution years and average wage index; the individual account adds 8% of the social contribution base, capped by your employee social rate. Pension is conditional on minimum service and eligibility in Shanghai. Start age 63 is an editable scenario, not a legal-age determination. No future pension increases or transitional pensions are modelled.',
+        cpfPlanner: 'Official CPF LIFE planner', cpfAllocationSource: '2026 allocation rates', cpfRatesSource: '2026 contribution rates',
+        pensionFormulaSource: 'Shanghai pension formula', pensionDivisorSource: 'Payout divisors', pensionEligibilitySource: 'Eligibility rules',
+        cpfLifeIncome: 'Custom CPF LIFE income estimate', cpfLifeQuoteNeeded: 'Enter a monthly CPF LIFE estimate from the official planner. A CPF savings balance is not annual retirement income.',
+        cpfLifeQuoteShort: 'Enter a CPF LIFE monthly estimate below', projectionMoney: 'Projected amount',
+        cnPensionAssumption: (years, base) => `Assumes ${years} more contribution years at a fixed monthly social base of ${base}.`,
+        projectedCpfSavings: 'Illustrative unused CPF savings at income start age',
+        shanghaiPension: 'Illustrative Shanghai pension', retirementPot: 'Projected pension individual-account balance',
+        basicPension: 'Basic pension / year', individualPension: 'Individual-account pension / year', monthlyRetirement: 'Retirement income / month',
+        retirementAgeError: 'Use whole ages: start age 16–70, stop age at or after the start, and pension age 40–70 at or after stopping work. CPF LIFE starts at 65 or later.',
+        retirementInputError: 'Check retirement inputs: savings and CPF LIFE payout must be non-negative, annual interest 0% to 10%, OA retained 0% to 100%, and China wage/index/service inputs must be valid.',
+        pensionYearsShort: (years, minimum) => `${years} contribution years; ${minimum} required. This scenario does not qualify for a monthly pension.`,
+        cpfLifePeriod: age => `CPF LIFE starts at ${age} and pays for life. This is an estimate, not a guaranteed payout.`,
+        pensionPeriod: (age, years) => `From age ${age}, conditional lifetime pension; ${years} contribution years.`,
+        sgCpfEligible: 'Singapore citizen / PR', sgCpfHelp: 'Turn off for a foreign employee who is not a permanent resident. Tax residency is separate.',
+        cashLeft: 'Cash left after costs',
+        cashLeftHelp: 'Cash after income tax, employee contributions, living costs and allowances. Enter realistic costs for each offer; zero costs do not compare the cost of living.',
+        takeHomeHelp: 'Cash after income tax and employee contributions, before living costs and allowances.',
+        fundContributions: 'CPF / housing-fund contributions',
+        accountsHelp: 'Annual employee + employer CPF or 住房公积金 contributions only. China pension and medical accounts are not included. These restricted funds are separate from cash; interest and future payouts are not modelled.',
+        annualDifference: 'Annual difference', averageMonthlyDifference: 'Annual difference ÷ 12', monthlyCashLeft: 'Cash left ÷ 12', addAnotherOffer: 'Add another offer to see the difference.',
+        otherMonthlyCosts: 'Other costs / month', annualExpenses: 'One-time expenses / year',
+        costsHelp: 'Include transport, utilities and personal spending in other monthly costs; use annual expenses for travel or moving. Enter each cost once, in the offer currency.',
+        employeeInsurance: 'Employee social insurance', employerInsurance: 'Employer social insurance',
+        socialPremiumsHelp: 'Social insurance premiums support pension, medical and other benefits. They are not an individual-account balance.',
+        taxMethod: 'Bonus tax method', bonusAssumption: 'The bonus is assumed paid in full. Set total months of pay to 12 to check a no-bonus scenario.',
+        title: 'Compensation package comparer', subtitle: 'Compare cash take-home, taxes, living costs, CPF and 住房公积金 for Singapore and Shanghai offers.', profileLabel: 'Default model:', profileText: 'Singapore uses citizen CPF; Shanghai uses a China-local contract. All example inputs are fictional and editable.', fxLabel: '1 SGD in CNY', exportData: 'Export data', importData: 'Import data', addOffer: '+ Add offer', saved: 'Saved automatically', saveUnavailable: 'Browser save unavailable', imported: 'Data imported', importFailed: 'Could not import that file', compare: 'Compare', afterCosts: 'After costs & allowances', cashTakeHome: 'Cash take-home', cashAndAccounts: 'Cash + personal accounts', displayAs: 'Display as', percentageVs: 'Percentage vs', sideBySide: 'Side-by-side', nativeAnnual: 'Native currency · annual', offer: 'Offer', gross: 'Gross', tax: 'Tax', employeeContributions: 'Employee contributions', takeHome: 'Take-home', livingCosts: 'Living costs', allowances: 'Allowances', afterCostsShort: 'After costs', personalAccounts: 'Personal accounts', employerContributions: 'Employer contributions', assumptionsTitle: 'Model assumptions and official sources', singapore: 'Singapore', shanghai: 'Shanghai', monthlyPay: 'Monthly base pay', monthsOfPay: 'Total months of pay', taxStatus: 'Tax status', resident: 'Resident', nonresident: 'Non-resident', eligibleBonus: 'Eligible one-time annual bonus', eligibleBonusHelp: 'For a qualifying lump-sum year-end bonus. The calculator uses the cheaper permitted tax method.', contributionAssumptions: 'Contribution assumptions', otherReliefs: 'Other annual tax reliefs', cpfHelp: 'Uses standard 2026 CPF rates for the selected current age band, for a citizen or third-year PR. Overrides remain available.', sources: 'Sources', overrideCpf: 'Override CPF rates and ceilings', employeeCpf: 'Employee CPF %', employerCpf: 'Employer CPF %', owCeiling: 'Monthly OW ceiling', annualCpfCeiling: 'Annual CPF ceiling', housingFundRate: '住房公积金 rate (you and employer)', otherDeductions: 'Other annual tax deductions', chinaHousingHelp: 'Generic default: 7% each for standard 住房公积金.', whyDefaults: 'Why these defaults?', overrideShanghai: 'Override Shanghai rates and bases', employeeSocial: 'Employee social %', employerSocial: 'Employer social %', socialMin: 'Social base minimum', socialMax: 'Social base maximum', housingMin: '住房公积金 base minimum', housingMax: '住房公积金 base maximum', costsAllowances: 'Living costs & allowances', housingCost: 'Housing cost / month', housingAllowance: 'Company housing allowance / month', foodCost: 'Food cost / week', notes: 'Notes', notesPlaceholder: 'e.g. Health insurance included', allowanceHelp: 'Describe non-cash benefits in Notes. Enter taxable cash allowances as pay.', moveEarlier: 'Move earlier', moveLater: 'Move later', duplicate: 'Duplicate', remove: 'Remove', annualTakeHome: 'Annual take-home', bestAdjusted: 'Best adjusted offer', bestCash: 'Best cash offer', bestTotal: 'Best total-value offer', afterTaxCosts: 'After tax, costs, and allowances', afterTaxDeductions: 'After tax + employee deductions', cashAccountsContext: 'After costs + CPF / 住房公积金 accounts', emptyOffers: 'Add an offer to begin.', noOffers: 'No offers yet.', baseline: 'Baseline', vsBaseline: 'vs baseline', annualCash12: 'Annual cash ÷ 12', averageMonth: 'Average base-pay month', bonusAfterTax: 'Year-end bonus after tax', incomeTax: 'Income tax', yourContributions: 'Your contributions', afterCostsAllowances: 'After living costs & allowances', companyOffsets: 'Company offsets', cpfAccount: 'CPF account', housingFundAccount: '住房公积金 account', you: 'you', employer: 'employer', socialInsurance: 'Social insurance', separateBonus: 'separate bonus', combinedIncome: 'combined income', monthsSplit: (bonus) => `12 monthly salaries + ${bonus} months paid as a separate year-end bonus.`, untitled: 'Untitled offer', copy: 'copy', offerN: n => `Offer ${n}`
       },
       zh: {
-        title: '薪酬方案比较器', subtitle: '比较新加坡与上海工作的税后现金、生活成本、CPF 与住房公积金。', profileLabel: '默认模型：', profileText: '新加坡采用公民CPF；上海采用中国境内劳动合同。所有示例输入均为虚构且可调整。', fxLabel: '1 新元兑换人民币', exportData: '导出数据', importData: '导入数据', addOffer: '+ 添加方案', saved: '已自动保存', saveUnavailable: '浏览器无法保存', imported: '数据已导入', importFailed: '无法导入该文件', compare: '比较指标', afterCosts: '扣除成本及计入补贴后', cashTakeHome: '税后到手现金', cashAndAccounts: '现金＋个人账户', displayAs: '显示币种', percentageVs: '百分比基准', sideBySide: '并排比较', nativeAnnual: '原币种 · 每年', offer: '方案', gross: '税前收入', tax: '个人所得税', employeeContributions: '个人缴纳', takeHome: '到手现金', livingCosts: '生活成本', allowances: '公司补贴', afterCostsShort: '扣除成本后', personalAccounts: '个人账户', employerContributions: '公司缴纳', employerCost: '公司总成本', assumptionsTitle: '计算假设与官方来源', singapore: '新加坡', shanghai: '上海', monthlyPay: '每月基本工资', monthsOfPay: '全年总薪资月数', taxStatus: '税务居民身份', resident: '税务居民', nonresident: '非税务居民', eligibleBonus: '符合条件的全年一次性奖金', eligibleBonusHelp: '适用于一次性发放且符合规定的年终奖；计算器会选择较低的合法计税方式。', contributionAssumptions: '缴纳参数', otherReliefs: '其他年度税务减免', cpfHelp: '默认采用2026年、55岁及以下新加坡公民或第三年PR的CPF比例和上限。', sources: '来源', overrideCpf: '调整CPF比例与上限', employeeCpf: '个人 CPF %', employerCpf: '公司 CPF %', owCeiling: '每月普通工资上限', annualCpfCeiling: '年度 CPF 工资上限', housingFundRate: '住房公积金比例（个人与公司）', otherDeductions: '其他年度税前扣除', chinaHousingHelp: '通用默认值：个人和公司各7%标准住房公积金。', whyDefaults: '默认值依据', overrideShanghai: '调整上海缴纳比例与基数', employeeSocial: '个人社保 %', employerSocial: '公司社保 %', socialMin: '社保缴费基数下限', socialMax: '社保缴费基数上限', housingMin: '住房公积金基数下限', housingMax: '住房公积金基数上限', costsAllowances: '生活成本与公司补贴', housingCost: '每月住房成本', housingAllowance: '公司每月住房补贴', foodCost: '每周饮食成本', annualExpenses: '每年一次性支出', annualExpensesHelp: '旅行等支出的年度总额，计入生活成本时只扣除一次。', notes: '备注', notesPlaceholder: '例如：包含商业医疗保险', allowanceHelp: '非现金福利请写在备注；应税现金补贴应计入工资。', moveEarlier: '向前移动', moveLater: '向后移动', duplicate: '复制', remove: '删除', annualTakeHome: '年度到手现金', bestAdjusted: '最佳综合现金方案', bestCash: '最高到手现金', bestTotal: '最高总价值方案', afterTaxCosts: '扣除税款、生活成本并计入补贴', afterTaxDeductions: '扣除税款及个人缴纳', cashAccountsContext: '扣除成本后现金＋CPF／住房公积金', emptyOffers: '请添加一个薪酬方案。', noOffers: '暂无方案。', baseline: '基准', vsBaseline: '相对基准', annualCash12: '年度现金 ÷ 12', averageMonth: '平均基本工资月到手', bonusAfterTax: '税后年终奖', incomeTax: '个人所得税', yourContributions: '个人缴纳', afterCostsAllowances: '扣除生活成本并计入补贴后', companyOffsets: '公司补贴', totalEmployerCost: '公司总成本', cpfAccount: 'CPF 个人账户', housingFundAccount: '住房公积金个人账户', you: '个人', employer: '公司', socialInsurance: '社会保险', separateBonus: '年终奖单独计税', combinedIncome: '并入综合所得', monthsSplit: (bonus) => `12个月固定工资＋${bonus}个月工资作为年终奖一次性发放。`, untitled: '未命名方案', copy: '副本', offerN: n => `方案 ${n}`
+        ersSource: '2026年RA存入上限',
+        oaChoice: 'RA按上限存入后，剩余资金如何处理',
+        oaWithdraw: '1. 将剩余资金一次取出，分摊为退休期间的支出',
+        oaKeep: '2. 将剩余资金留在OA赚取利息，并逐步提取',
+        oaEndAge: '预期寿命／OA支出结束年龄',
+        oaChoiceAvailable: (amount, age) => `${age}岁时可用于这两种方案的剩余储蓄：${amount}。`,
+        oaChoiceEmpty: '存入RA后没有剩余资金，因此两种方案的退休收入相同。',
+        oaNoneRetained: '目前“未来OA缴纳额留作退休的比例”为0%，即假设未来OA缴纳额全部用于住房。如预计会保留部分资金，请修改下方比例。',
+        pensionLifetimeHelp: '符合领取资格后，中国养老金终身发放。预期寿命改变领取年数，不改变预估年度养老金。法定计发月数不是发放期限。本测算不预测未来养老金调整。',
+        pensionLifetimeSource: '养老金终身发放说明',
+        oaPlanHelp: 'OA支出从停止工作或55岁两者中较晚的年龄开始。一次取出后假设不再生息；逐步提取时，OA剩余余额按基础年利率2.5%计息。两种方式均规划用至所选结束年龄。OA提取是自行安排的支出计划，CPF LIFE仍单独终身发放。',
+        oaAgeError: 'OA支出结束年龄须为整数，大于养老金开始年龄，且不超过120岁。',
+        sgRetirementTotal: 'CPF LIFE＋OA支出', cpfAnnualIncome: '年度CPF LIFE', oaAnnualSpending: '每年使用的OA储蓄',
+        oaAtStart: '开始OA支出时的剩余储蓄', oaRemainingCash: '养老金开始时尚未花费的已取现金', oaRemainingAccount: '养老金开始时剩余的OA余额',
+        raFunding: 'RA存入额，不含RA自身利息',
+        oaPlanPeriod: (start, end, amount) => `OA储蓄从${start}至${end}岁，每年提供${amount}。`,
+        oaAfterEnd: (end, amount) => `${end}岁后，所规划的OA储蓄已用完；CPF LIFE仍预计每年终身发放${amount}。`,
+        oaBeforePension: (start, age, amount) => `CPF LIFE开始前，OA储蓄从${start}至${age}岁每年提供${amount}。`,
+        sgBridgePeriod: (stop, drawStart, age) => `${stop < drawStart ? `${stop}至${drawStart}岁，此CPF计划没有提取收入，须靠其他储蓄或收入。` : ''}计划OA支出从${drawStart}岁开始，CPF LIFE从${age}岁开始。`,
+        raShortfall: (funded, limit) => `现有储蓄可存入RA ${funded}，上限为${limit}；不假设额外现金补足。`,
+        sgIncomePeriod: (age, end) => `${age}至${end}岁为CPF LIFE加计划OA提取，之后CPF LIFE继续发放。`,
+        interestSource: '利率来源',
+        cpfInterestHelp: 'SA／RA退休储蓄默认年利率4%，留存OA按2.5%计息。35岁及以下新缴纳额的综合基础利率约3.1%。余额测算不计额外利息奖励；CPF LIFE参考官方领取示例。',
+        cnInterestHelp: '养老个人账户默认年利率1.5%，以公布的2025年记账利率作为未来年份的简化假设。基础养老金另按工资及缴费年限计算。未来利率可能变化。',
+        stopWorkAge: '停止工作年龄', cpfPayoutMode: 'CPF LIFE估算方式', cpfPayoutAuto: '自动参考估算', cpfPayoutManual: '自定义月领估值',
+        cpfRetirementSum: 'RA存入上限，参考2026年ERS', cpfReferenceSource: '官方CPF LIFE领取示例', resetRetirement: '使用25至50岁测算默认值',
+        cpfReferenceIncome: 'CPF LIFE参考估算', cpfReferenceRange: '预计RA余额超出官方示例范围，请改用官方工具的月领估值。',
+        cpfRaBalance: '开始领取时的预计退休账户余额', cpfOtherBalance: '其他未使用CPF储蓄，不计入养老金',
+        savingsAtStop: '停止工作时的退休储蓄',
+        workPeriod: (start, stop, age) => `从${start}岁缴费至${stop}岁，共${stop - start}年；${age}岁开始领取养老金。`,
+        bridgePeriod: (stop, age) => `${stop}岁后无工资及新增缴费；养老金开始前的${age - stop}年须由其他储蓄或收入支持。`,
+        cpfIncluded: '现金＋账户合计所计入的CPF', cpfAll: '全部CPF账户', cpfOaOnly: '仅住房：普通账户（OA）', cpfCustom: '自定义总CPF计入比例',
+        cpfAgeBand: '当前CPF年龄段', cpfAge35: '35岁及以下', cpfAgeOver70: '70岁以上', cpfCustomPercent: '计入总CPF的比例 %',
+        cpfPortionHelp: 'OA是可用于住房的CPF账户。选择OA可与中国住房公积金比较住房相关缴纳额。改变年龄段会载入2026年标准缴纳比例，仍可手动覆盖。此选择只改变合计比较，不改变CPF实际扣款及税务减免。',
+        includedFunds: '计入合计的账户缴纳额', cpfOa: '普通账户／住房', cpfSpecial: '特别账户／退休账户', cpfMedical: 'MediSave／医疗',
+        cpfSplitHelp: '采用达到退休存款限额后划转前的标准分配。若实际OA分配不同，可自定义比例。金额包含个人与公司缴纳。',
+        selectedCpfNote: (part, percent, amount) => `计入的CPF：${part} · 总CPF的${percent}% = ${amount}`,
+        cashPlusFunds: '扣除成本后现金＋CPF／住房公积金',
+        combinedHelp: '本年扣除成本后现金，加上各新加坡方案所选的CPF部分，或中国方案个人及公司缴纳的住房公积金。可选仅住房OA进行住房相关缴纳额比较。账户资金用途受限，退休收入另列。',
+        combinedShortHelp: '包含用途受限的CPF／住房公积金缴纳额。退休收入另列。',
+        retirementIncome: '预估年度退休收入',
+        retirementUnavailable: '暂不估算',
+        retirementHelp: '新加坡显示CPF LIFE加所选剩余OA储蓄支出，持续至指定结束年龄。上海显示基础及个人账户养老金，住房公积金另列。不计工资。各方案注明开始年龄及终身发放部分。',
+        retirementAssumptions: '退休收入估算与假设',
+        retirementModelHelp: '默认25至50岁工作并缴费，停止工作后不再新增缴费。储蓄留在账户期间按年计息。不调整通胀，工资、缴费基数及现行规则保持固定。不计工资另存的现金、中国住房公积金及医保账户。这里的年龄仅用于退休测算。',
+        projectionAge: '开始工作／缴费年龄', retirementAge: '养老金开始领取年龄',
+        retirementBalance: '现有退休储蓄余额', retirementGrowth: '养老账户年利率 %',
+        cpfLifeMonthly: '开始领取年龄的CPF LIFE月领金额', cpfLifePlaceholder: '填入官方工具估算金额', oaRetained: '未来OA缴纳额留作退休的比例 %',
+        pastPensionYears: '中国养老保险已缴年数', pastPensionIndex: '历史平均缴费工资指数', cnAverageWage: '上海月平均工资，人民币',
+        cpfProjectionHelp: '现有余额视为未使用的SA／RA储蓄。所选未使用的OA缴纳额退休前按2.5%计息。55岁起，可用储蓄按所选上限存入RA，默认2026年ERS为S$440,800。RA利息可使余额超过该存入上限，剩余资金按所选OA方式处理。本示例固定采用2026年上限。CPF LIFE参考官方男性Standard Plan示例，并非个人报价。',
+        cnProjectionHelp: '现有余额为养老保险个人账户，不含住房公积金及医保。基础养老金按预计缴费年数及平均缴费指数计算；未来个人账户按社保基数的8%计入，且不超过所填个人社保比例。须满足最低缴费年限及上海领取资格。默认63岁仅是可修改的情景，不代表已确定法定退休年龄。不预测养老金上调或过渡性养老金。',
+        cpfPlanner: '官方CPF LIFE测算工具', cpfAllocationSource: '2026年账户分配比例', cpfRatesSource: '2026年缴纳比例',
+        pensionFormulaSource: '上海养老金公式', pensionDivisorSource: '计发月数', pensionEligibilitySource: '领取条件',
+        cpfLifeIncome: '自定义CPF LIFE收入估算', cpfLifeQuoteNeeded: '请填入官方工具估算的CPF LIFE月领金额。CPF储蓄余额并不等于年度退休收入。',
+        cpfLifeQuoteShort: '请在下方填写CPF LIFE月领估值', projectionMoney: '预计金额',
+        cnPensionAssumption: (years, base) => `假设未来再缴费${years}年，社保月缴费基数固定为${base}。`,
+        projectedCpfSavings: '开始领取时的未使用CPF储蓄示例',
+        shanghaiPension: '上海养老金示例', retirementPot: '预计养老个人账户余额',
+        basicPension: '年度基础养老金', individualPension: '年度个人账户养老金', monthlyRetirement: '每月退休收入',
+        retirementAgeError: '请输入整数年龄：起始16至70岁，停止工作不早于起始年龄，养老金领取40至70岁且不早于停止工作。CPF LIFE从65岁或以后开始。',
+        retirementInputError: '请检查退休输入：余额及CPF LIFE月领金额非负，年利率0%至10%，OA留存0%至100%，中国工资、指数及缴费年数需有效。',
+        pensionYearsShort: (years, minimum) => `缴费${years}年，所需${minimum}年；此情景未满足按月领取养老金的年限。`,
+        cpfLifePeriod: age => `从${age}岁开始，CPF LIFE终身发放；此处为估算，并非保证金额。`,
+        pensionPeriod: (age, years) => `从${age}岁开始，满足条件后终身领取；累计缴费${years}年。`,
+        sgCpfEligible: '新加坡公民／永久居民（PR）', sgCpfHelp: '非新加坡永久居民的外籍员工请关闭。税务居民身份另行选择。',
+        cashLeft: '扣除生活成本后现金',
+        cashLeftHelp: '扣除个税、个人缴纳和生活成本，并计入补贴后的现金。请填写各方案的实际生活成本；成本为零时，尚未比较两地的生活成本。',
+        takeHomeHelp: '扣除个税和个人缴纳后的现金，尚未扣除生活成本或计入补贴。',
+        fundContributions: 'CPF／住房公积金缴纳额',
+        accountsHelp: '仅显示本年个人与公司缴纳的CPF或住房公积金，不包含中国养老和医保个人账户。这些受限资金与现金分开比较；不预测利息或未来养老金。',
+        annualDifference: '年度差额', averageMonthlyDifference: '年度差额÷12', monthlyCashLeft: '剩余现金÷12', addAnotherOffer: '请添加另一个方案以比较差额。',
+        otherMonthlyCosts: '其他每月支出', annualExpenses: '每年一次性支出',
+        costsHelp: '交通、水电和个人消费计入其他每月支出；旅行或搬家计入年度支出。使用方案原币种，每项支出只填写一次。',
+        employeeInsurance: '个人社保缴费', employerInsurance: '公司社保缴费',
+        socialPremiumsHelp: '社保缴费用于养老、医疗等保障，不等于个人账户余额。',
+        taxMethod: '年终奖计税方式', bonusAssumption: '默认年终奖足额发放。将全年总薪资月数设为12，可查看无年终奖的情景。',
+        title: '薪酬方案比较器', subtitle: '比较新加坡与上海工作的税后现金、生活成本、CPF 与住房公积金。', profileLabel: '默认模型：', profileText: '新加坡采用公民CPF；上海采用中国境内劳动合同。所有示例输入均为虚构且可调整。', fxLabel: '1 新元兑换人民币', exportData: '导出数据', importData: '导入数据', addOffer: '+ 添加方案', saved: '已自动保存', saveUnavailable: '浏览器无法保存', imported: '数据已导入', importFailed: '无法导入该文件', compare: '比较指标', afterCosts: '扣除成本及计入补贴后', cashTakeHome: '税后到手现金', cashAndAccounts: '现金＋个人账户', displayAs: '显示币种', percentageVs: '百分比基准', sideBySide: '并排比较', nativeAnnual: '原币种 · 每年', offer: '方案', gross: '税前收入', tax: '个人所得税', employeeContributions: '个人缴纳', takeHome: '到手现金', livingCosts: '生活成本', allowances: '公司补贴', afterCostsShort: '扣除成本后', personalAccounts: '个人账户', employerContributions: '公司缴纳', assumptionsTitle: '计算假设与官方来源', singapore: '新加坡', shanghai: '上海', monthlyPay: '每月基本工资', monthsOfPay: '全年总薪资月数', taxStatus: '税务居民身份', resident: '税务居民', nonresident: '非税务居民', eligibleBonus: '符合条件的全年一次性奖金', eligibleBonusHelp: '适用于一次性发放且符合规定的年终奖；计算器会选择较低的合法计税方式。', contributionAssumptions: '缴纳参数', otherReliefs: '其他年度税务减免', cpfHelp: '按所选当前年龄段采用2026年新加坡公民或第三年PR标准比例，仍可手动覆盖。', sources: '来源', overrideCpf: '调整CPF比例与上限', employeeCpf: '个人 CPF %', employerCpf: '公司 CPF %', owCeiling: '每月普通工资上限', annualCpfCeiling: '年度 CPF 工资上限', housingFundRate: '住房公积金比例（个人与公司）', otherDeductions: '其他年度税前扣除', chinaHousingHelp: '通用默认值：个人和公司各7%标准住房公积金。', whyDefaults: '默认值依据', overrideShanghai: '调整上海缴纳比例与基数', employeeSocial: '个人社保 %', employerSocial: '公司社保 %', socialMin: '社保缴费基数下限', socialMax: '社保缴费基数上限', housingMin: '住房公积金基数下限', housingMax: '住房公积金基数上限', costsAllowances: '生活成本与公司补贴', housingCost: '每月住房成本', housingAllowance: '公司每月住房补贴', foodCost: '每周饮食成本', notes: '备注', notesPlaceholder: '例如：包含商业医疗保险', allowanceHelp: '非现金福利请写在备注；应税现金补贴应计入工资。', moveEarlier: '向前移动', moveLater: '向后移动', duplicate: '复制', remove: '删除', annualTakeHome: '年度到手现金', bestAdjusted: '最佳综合现金方案', bestCash: '最高到手现金', bestTotal: '最高总价值方案', afterTaxCosts: '扣除税款、生活成本并计入补贴', afterTaxDeductions: '扣除税款及个人缴纳', cashAccountsContext: '扣除成本后现金＋CPF／住房公积金', emptyOffers: '请添加一个薪酬方案。', noOffers: '暂无方案。', baseline: '基准', vsBaseline: '相对基准', annualCash12: '年度现金 ÷ 12', averageMonth: '平均基本工资月到手', bonusAfterTax: '税后年终奖', incomeTax: '个人所得税', yourContributions: '个人缴纳', afterCostsAllowances: '扣除生活成本并计入补贴后', companyOffsets: '公司补贴', cpfAccount: 'CPF 个人账户', housingFundAccount: '住房公积金个人账户', you: '个人', employer: '公司', socialInsurance: '社会保险', separateBonus: '年终奖单独计税', combinedIncome: '并入综合所得', monthsSplit: (bonus) => `12个月固定工资＋${bonus}个月工资作为年终奖一次性发放。`, untitled: '未命名方案', copy: '副本', offerN: n => `方案 ${n}`
       }
     };
     let language = localStorage.getItem('salary-comparer-language') === 'zh' ? 'zh' : 'en';
@@ -290,16 +503,46 @@
       document.getElementById('lang-en').setAttribute('aria-pressed', language === 'en');
       document.getElementById('lang-zh').setAttribute('aria-pressed', language === 'zh');
     }
-    const defaults = {
-      sg: { location: 'sg', monthly: 6000, months: 13, sgTaxStatus: 'resident', sgEmployeeRate: 20, sgEmployerRate: 17, sgOwCap: 8000, sgAnnualCap: 102000, sgReliefs: 0, housingCost: 0, housingAllowance: 0, foodCost: 0, annualExpenses: 0, allowanceNotes: '' },
-      cn: { location: 'cn', monthly: 30000, months: 13, cnBonusEligible: true, cnEmployeeSocial: 10.5, cnEmployerSocial: 25.7, cnEmployeeHousing: 7, cnEmployerHousing: 7, cnSocialMin: 7546, cnSocialMax: 37731, cnHousingMin: 2740, cnHousingMax: 37302, cnDeductions: 0, housingCost: 0, housingAllowance: 0, foodCost: 0, annualExpenses: 0, allowanceNotes: '' }
+    const cpfAgeBands = {
+      35: [20,17,.6217,.1621,.2162], 45: [20,17,.5677,.1891,.2432],
+      50: [20,17,.5136,.2162,.2702], 55: [20,17,.4055,.3108,.2837],
+      60: [18,16,.353,.3382,.3088], 65: [12.5,12.5,.14,.44,.42],
+      70: [7.5,9,.0607,.303,.6363], 120: [5,7.5,.08,.08,.84]
     };
+    const defaults = {
+      sg: { location: 'sg', monthly: 6000, months: 13, sgTaxStatus: 'resident', sgCpfEligible: true, sgEmployeeRate: 20, sgEmployerRate: 17, sgOwCap: 8000, sgAnnualCap: 102000, sgReliefs: 0, housingCost: 0, housingAllowance: 0, foodCost: 0, otherMonthlyCosts: 0, annualExpenses: 0, allowanceNotes: '', retirementCurrentAge: 25, retirementStopAge: 50, retirementAge: 65, retirementBalance: 0, retirementGrowth: 4, retirementInterestModel: 'nominal', sgOaRetained: 0, sgCpfLifeMonthly: null, sgCpfPayoutMode: 'auto', sgRetirementSum: 440800, sgOaWithdrawalMode: 'withdraw', sgOaEndAge: 80, sgCpfPortion: 'all', sgCpfAgeBand: '35', sgCpfShare: 50 },
+      cn: { location: 'cn', monthly: 30000, months: 13, cnBonusEligible: true, cnEmployeeSocial: 10.5, cnEmployerSocial: 25.7, cnEmployeeHousing: 7, cnEmployerHousing: 7, cnSocialMin: 7546, cnSocialMax: 37731, cnHousingMin: 2740, cnHousingMax: 37302, cnDeductions: 0, housingCost: 0, housingAllowance: 0, foodCost: 0, otherMonthlyCosts: 0, annualExpenses: 0, allowanceNotes: '', retirementCurrentAge: 25, retirementStopAge: 50, retirementAge: 63, retirementBalance: 0, retirementGrowth: 1.5, retirementInterestModel: 'nominal', cnPastPensionYears: 0, cnPastPensionIndex: 1, cnAverageWage: 12577 }
+    };
+    const comparisonMetrics = {
+      adjustedTakeHome: { label: 'cashLeft', help: 'cashLeftHelp' },
+      adjustedTotalValue: { label: 'cashPlusFunds', help: 'combinedHelp' },
+      retirementIncome: { label: 'retirementIncome', help: 'retirementHelp' },
+      takeHome: { label: 'annualTakeHome', help: 'takeHomeHelp' },
+      account: { label: 'fundContributions', help: 'accountsHelp' }
+    };
+    const normalizeMetric = value => Object.hasOwn(comparisonMetrics, value) ? value : 'adjustedTakeHome';
     const storageKey = 'salary-comparer-v1';
     const numberKeys = new Set(Object.keys(defaults.sg).concat(Object.keys(defaults.cn)).filter(key => typeof defaults.sg[key] === 'number' || typeof defaults.cn[key] === 'number'));
     const normalizeOffer = raw => {
       const location = raw?.location === 'cn' ? 'cn' : 'sg';
       const offer = { ...defaults[location], ...raw, location, id: typeof raw?.id === 'string' ? raw.id : crypto.randomUUID(), name: String(raw?.name || t('untitled')) };
+      offer.sgCpfEligible = raw?.sgCpfEligible !== false;
+      offer.sgCpfLifeMonthly = raw?.sgCpfLifeMonthly === null || raw?.sgCpfLifeMonthly === undefined || raw?.sgCpfLifeMonthly === '' ? null : Number(raw.sgCpfLifeMonthly);
+      offer.sgCpfPortion = ['all', 'oa', 'custom'].includes(raw?.sgCpfPortion) ? raw.sgCpfPortion : 'all';
+      offer.sgCpfAgeBand = Object.hasOwn(cpfAgeBands, raw?.sgCpfAgeBand) ? String(raw.sgCpfAgeBand) : '35';
       numberKeys.forEach(key => { if (key in offer) offer[key] = Number.isFinite(Number(offer[key])) ? Number(offer[key]) : defaults[location][key] || 0; });
+      if (raw?.retirementInterestModel !== 'nominal') offer.retirementGrowth = defaults[location].retirementGrowth;
+      offer.retirementInterestModel = 'nominal';
+      delete offer.sgRetirementInflation;
+      if (raw?.retirementStopAge === undefined && (raw?.retirementCurrentAge !== undefined || raw?.retirementAge !== undefined)) offer.retirementStopAge = offer.retirementAge;
+      offer.sgCpfPayoutMode = ['auto', 'manual'].includes(raw?.sgCpfPayoutMode) ? raw.sgCpfPayoutMode : raw?.sgCpfLifeMonthly !== null && raw?.sgCpfLifeMonthly !== undefined && raw?.sgCpfLifeMonthly !== '' ? 'manual' : 'auto';
+      if (location === 'sg') {
+        offer.sgOaWithdrawalMode = raw?.sgOaWithdrawalMode === 'keep' ? 'keep' : 'withdraw';
+        if (raw?.sgOaWithdrawalMode === undefined && offer.sgRetirementSum === 220400) offer.sgRetirementSum = defaults.sg.sgRetirementSum;
+        offer.sgCpfShare = Math.min(100, Math.max(0, offer.sgCpfShare));
+        if (raw?.sgEmployeeRate === undefined) offer.sgEmployeeRate = cpfAgeBands[offer.sgCpfAgeBand][0];
+        if (raw?.sgEmployerRate === undefined) offer.sgEmployerRate = cpfAgeBands[offer.sgCpfAgeBand][1];
+      }
       if (location === 'cn' && offer.cnSocialMin === 7460) offer.cnSocialMin = 7546;
       if (location === 'cn' && offer.cnSocialMax === 37302) offer.cnSocialMax = 37731;
       offer.cnBonusEligible = Boolean(offer.cnBonusEligible);
@@ -337,18 +580,20 @@
     };
     const calculate = o => {
       const result = o.location === 'sg' ? calculateSg(o) : calculateCn(o);
-      const annualCosts = o.housingCost * 12 + o.foodCost * 52 + Math.max(0, o.annualExpenses || 0);
+      const annualCosts = o.housingCost * 12 + o.foodCost * 52 + Math.max(0, Number(o.otherMonthlyCosts) || 0) * 12 + Math.max(0, Number(o.annualExpenses) || 0);
       const allowances = o.housingAllowance * 12;
       const adjustedTakeHome = result.takeHome - annualCosts + allowances;
-      return { ...result, annualCosts, allowances, adjustedTakeHome, adjustedTotalValue: adjustedTakeHome + result.account };
+      const retirement = calculateRetirement(o);
+      return { ...result, annualCosts, allowances, adjustedTakeHome, adjustedTotalValue: adjustedTakeHome + result.includedAccount, retirementIncome: retirement.annual, retirement };
     };
 
     function calculateSg(o) {
       const salary = o.monthly * 12;
       const bonus = o.monthly * Math.max(0, o.months - 12);
       const gross = salary + bonus;
-      const ordinary = Math.min(o.monthly, o.sgOwCap) * 12;
-      const cpfWages = ordinary + Math.min(bonus, Math.max(0, o.sgAnnualCap - ordinary));
+      const cpfApplies = o.sgCpfEligible !== false;
+      const ordinary = cpfApplies ? Math.min(o.monthly, o.sgOwCap) * 12 : 0;
+      const cpfWages = cpfApplies ? ordinary + Math.min(bonus, Math.max(0, o.sgAnnualCap - ordinary)) : 0;
       const employee = cpfWages * o.sgEmployeeRate / 100;
       const employer = cpfWages * o.sgEmployerRate / 100;
       const employeeOrdinary = ordinary * o.sgEmployeeRate / 100;
@@ -358,7 +603,12 @@
       const salaryResidentTax = sgTax(Math.max(0, salary - employeeOrdinary - o.sgReliefs));
       const salaryTax = o.sgTaxStatus === 'nonresident' ? Math.max(salary * .15, salaryResidentTax) : salaryResidentTax;
       const takeHome = gross - employee - tax;
-      return { gross, tax, employee, employer, takeHome, regularTakeHome: (salary - employeeOrdinary - salaryTax) / 12, bonusTakeHome: bonus - employeeBonus - (tax - salaryTax), employerCost: gross + employer, account: employee + employer, currency: 'SGD', note: `${t('cpfAccount')}: ${t('you')} ${fmt(employee, 'SGD')} + ${t('employer')} ${fmt(employer, 'SGD')} = ${fmt(employee + employer, 'SGD')}` };
+      const account = employee + employer;
+      const band = cpfAgeBands[Object.hasOwn(cpfAgeBands, o.sgCpfAgeBand) ? o.sgCpfAgeBand : '35'];
+      const cpfSpecial = account * band[3], cpfMedical = account * band[4], cpfOa = account - cpfSpecial - cpfMedical;
+      const cpfPercent = o.sgCpfPortion === 'oa' ? band[2] * 100 : o.sgCpfPortion === 'custom' ? Math.min(100, Math.max(0, Number(o.sgCpfShare) || 0)) : 100;
+      const includedAccount = o.sgCpfPortion === 'oa' ? cpfOa : account * cpfPercent / 100;
+      return { gross, tax, employee, employer, takeHome, regularTakeHome: (salary - employeeOrdinary - salaryTax) / 12, bonusTakeHome: bonus - employeeBonus - (tax - salaryTax), account, includedAccount, cpfOa, cpfSpecial, cpfMedical, cpfPercent, employeeSocial: 0, employerSocial: 0, currency: 'SGD', note: `${t('cpfAccount')}: ${t('you')} ${fmt(employee, 'SGD')} + ${t('employer')} ${fmt(employer, 'SGD')} = ${fmt(account, 'SGD')}` };
     }
 
     function calculateCn(o) {
@@ -379,13 +629,114 @@
       const method = tax === separateTax ? t('separateBonus') : t('combinedIncome');
       const takeHome = gross - employeeSocial - employeeHousing - tax;
       const salaryTax = cnTax(Math.max(0, salary - 60000 - deductions));
-      return { gross, tax, employee: employeeSocial + employeeHousing, employer: employerSocial + employerHousing, takeHome, regularTakeHome: (salary - employeeSocial - employeeHousing - salaryTax) / 12, bonusTakeHome: bonus - (tax - salaryTax), employerCost: gross + employerSocial + employerHousing, account: employeeHousing + employerHousing, currency: 'CNY', employeeSocial, employeeHousing, employerHousing, note: `${t('housingFundAccount')}: ${t('you')} ${fmt(employeeHousing, 'CNY')} + ${t('employer')} ${fmt(employerHousing, 'CNY')} = ${fmt(employeeHousing + employerHousing, 'CNY')} · ${t('socialInsurance')}: ${t('you')} ${fmt(employeeSocial, 'CNY')} + ${t('employer')} ${fmt(employerSocial, 'CNY')} · ${method}` };
+      return { gross, tax, employee: employeeSocial + employeeHousing, employer: employerSocial + employerHousing, takeHome, regularTakeHome: (salary - employeeSocial - employeeHousing - salaryTax) / 12, bonusTakeHome: bonus - (tax - salaryTax), account: employeeHousing + employerHousing, includedAccount: employeeHousing + employerHousing, currency: 'CNY', employeeSocial, employerSocial, employeeHousing, employerHousing, taxMethod: method, note: `${t('housingFundAccount')}: ${t('you')} ${fmt(employeeHousing, 'CNY')} + ${t('employer')} ${fmt(employerHousing, 'CNY')} = ${fmt(employeeHousing + employerHousing, 'CNY')}` };
+    }
+
+    function cpfReferenceMonthly(capitalAt55, age) {
+      if (!Number.isFinite(capitalAt55) || capitalAt55 < 0 || age < 65 || age > 70) return null;
+      if (capitalAt55 === 0) return 0;
+      // shortcut: frozen 2026 male Standard Plan examples; use the official planner for a personal quote.
+      const rows = [[50000,490,670],[110200,950,1280],[150000,1250,1670],[220400,1780,2380],[300000,2380,3170],[440800,3440,4580]];
+      const capital = capitalAt55;
+      if (capital < rows[0][0] - .01 || capital > rows.at(-1)[0] + .01) return null;
+      const bounded = Math.min(rows.at(-1)[0], Math.max(rows[0][0], capital));
+      const i = Math.max(1, rows.findIndex(row => row[0] >= bounded));
+      const weight = (bounded - rows[i - 1][0]) / (rows[i][0] - rows[i - 1][0]);
+      const payment = row => row[1] + (row[2] - row[1]) * (age - 65) / 5;
+      return payment(rows[i - 1]) + weight * (payment(rows[i]) - payment(rows[i - 1]));
+    }
+
+    function calculateRetirement(o) {
+      const start = o.retirementCurrentAge, stop = o.retirementStopAge, age = o.retirementAge;
+      if (!Number.isInteger(start) || start < 16 || start > 70 || !Number.isInteger(stop) || stop < start || stop > age || !Number.isInteger(age) || age < 40 || age > 70 || (o.location === 'sg' && age < 65)) return { annual: null, reason: 'retirementAgeError' };
+      if (!Number.isFinite(o.retirementBalance) || o.retirementBalance < 0 || !Number.isFinite(o.retirementGrowth) || o.retirementGrowth < 0 || o.retirementGrowth > 10) return { annual: null, reason: 'retirementInputError' };
+      const years = age - start, growth = 1 + o.retirementGrowth / 100;
+      let balance = o.retirementBalance, balanceAtStop = balance;
+      if (o.location === 'sg') {
+        if (!Number.isFinite(o.sgOaRetained) || o.sgOaRetained < 0 || o.sgOaRetained > 100 || !Number.isFinite(o.sgRetirementSum) || o.sgRetirementSum < 0) return { annual: null, reason: 'retirementInputError' };
+        if (!Number.isInteger(o.sgOaEndAge) || o.sgOaEndAge <= age || o.sgOaEndAge > 120) return { annual: null, reason: 'oaAgeError' };
+        if (!['withdraw', 'keep'].includes(o.sgOaWithdrawalMode)) return { annual: null, reason: 'retirementInputError' };
+        const drawStart = Math.max(55, stop), drawEnd = o.sgOaEndAge;
+        let ra = start >= 55 ? Math.min(balance, o.sgRetirementSum) : 0;
+        let raFunded = ra;
+        let other = start >= 55 ? balance - ra : 0;
+        let sa = start < 55 ? balance : 0;
+        for (let a = start; a < age; a++) {
+          const [employee, employer, ordinary, special] = Object.entries(cpfAgeBands).find(([upper]) => a < Number(upper))[1];
+          const contribution = a < stop ? calculateSg({ ...o, sgEmployeeRate: employee, sgEmployerRate: employer }).account : 0;
+          if (a < 55) {
+            sa = sa * growth + contribution * special;
+            other = other * 1.025 + contribution * ordinary * o.sgOaRetained / 100;
+            balance = sa + other;
+            if (a + 1 === 55) { ra = Math.min(balance, o.sgRetirementSum); raFunded = ra; other = balance - ra; }
+          } else {
+            ra *= growth;
+            if (a < drawStart) other *= 1.025;
+            const availableDeposit = contribution * (special + ordinary * o.sgOaRetained / 100);
+            const raDeposit = Math.min(availableDeposit, Math.max(0, o.sgRetirementSum - raFunded));
+            ra += raDeposit;
+            raFunded += raDeposit;
+            other += availableDeposit - raDeposit;
+            balance = ra + other;
+          }
+          if (a + 1 === stop) balanceAtStop = balance;
+        }
+        const oaAtDrawStart = other, drawYears = drawEnd - drawStart, elapsed = age - drawStart;
+        const oaRate = o.sgOaWithdrawalMode === 'keep' ? .025 : 0;
+        // shortcut: level end-year withdrawals; use monthly cash flows for exact withdrawal timing.
+        const oaAnnual = oaRate ? other * oaRate / (1 - (1 + oaRate) ** -drawYears) : other / drawYears;
+        const oaGrowth = (1 + oaRate) ** elapsed;
+        other = Math.max(0, other * oaGrowth - oaAnnual * (oaRate ? (oaGrowth - 1) / oaRate : elapsed));
+        balance = ra + other;
+        if (!Number.isFinite(balance) || !Number.isFinite(oaAnnual)) return { annual: null, reason: 'retirementInputError' };
+        // shortcut: convert to the published age-55 reference at its 4% base rate; use the planner for a quote.
+        const automaticMonthly = cpfReferenceMonthly(ra / 1.04 ** (age - 55), age);
+        const context = { balance, balanceAtStop, raBalance: ra, raFunded, otherBalance: other, oaAtDrawStart, oaAnnual, drawStart, drawEnd, start, stop, age, automaticMonthly, method: o.sgCpfPayoutMode };
+        if (o.sgCpfPayoutMode === 'manual' && (!Number.isFinite(o.sgCpfLifeMonthly) || o.sgCpfLifeMonthly < 0)) return { ...context, annual: null, reason: 'retirementInputError' };
+        const cpfAnnual = o.sgCpfPayoutMode === 'manual' ? o.sgCpfLifeMonthly * 12 : automaticMonthly === null ? null : automaticMonthly * 12;
+        return cpfAnnual === null ? { ...context, cpfAnnual, annual: null, reason: 'cpfReferenceRange' } : { ...context, cpfAnnual, annual: cpfAnnual + oaAnnual };
+      }
+      if (!Number.isFinite(o.cnAverageWage) || o.cnAverageWage <= 0 || !Number.isFinite(o.cnPastPensionYears) || o.cnPastPensionYears < 0 || o.cnPastPensionYears > start - 16 || !Number.isFinite(o.cnPastPensionIndex) || o.cnPastPensionIndex < 0 || o.cnPastPensionIndex > 3) return { annual: null, reason: 'retirementInputError' };
+      const pensionRate = Math.min(8, Math.max(0, o.cnEmployeeSocial)) / 100;
+      const futureYears = o.monthly > 0 && pensionRate > 0 ? stop - start : 0;
+      const base = clamp(o.monthly, o.cnSocialMin, o.cnSocialMax);
+      for (let a = start; a < age; a++) {
+        balance = balance * growth + (a < stop && futureYears ? base * 12 * pensionRate : 0);
+        if (a + 1 === stop) balanceAtStop = balance;
+      }
+      const service = o.cnPastPensionYears + futureYears;
+      const retirementYear = new Date().getFullYear() + years;
+      const minimum = 15 + Math.min(5, Math.max(0, retirementYear - 2029) * .5);
+      if (service < minimum) return { annual: null, reason: 'pensionYearsShort', service, minimum, start, stop, age, balance, balanceAtStop };
+      const index = (o.cnPastPensionYears * o.cnPastPensionIndex + futureYears * base / o.cnAverageWage) / service;
+      const divisors = [233,230,226,223,220,216,212,208,204,199,195,190,185,180,175,170,164,158,152,145,139,132,125,117,109,101,93,84,75,65,56];
+      const basic = o.cnAverageWage * (1 + index) / 2 * service * .01 * 12;
+      const individual = balance / divisors[age - 40] * 12;
+      const annual = basic + individual;
+      return Number.isFinite(annual) ? { annual, balance, balanceAtStop, start, stop, age, service, basic, individual, futureYears, socialBase: base } : { annual: null, reason: 'retirementInputError' };
+    }
+
+    function barPosition(value, min, max) {
+      const range = max - min || 1;
+      return { left: (Math.min(value, 0) - min) / range * 100, width: Math.abs(value) / range * 100, zero: -min / range * 100 };
+    }
+
+    function percentDifference(value, baseline, isBaseline) {
+      if (isBaseline) return t('baseline');
+      if (baseline <= 0) return '—';
+      const difference = (value / baseline - 1) * 100;
+      return `${difference >= 0 ? '+' : ''}${difference.toFixed(1)}%`;
     }
 
     const fmt = (n, currency) => new Intl.NumberFormat(language === 'zh' ? 'zh-CN' : 'en-SG', { style: 'currency', currency, maximumFractionDigits: 0 }).format(Math.round(n));
     const q = (root, selector) => root.querySelector(selector);
     const fieldMap = {
-      '.name':'name', '.location':'location', '.monthly':'monthly', '.months':'months', '.sg-tax-status':'sgTaxStatus', '.sg-employee-rate':'sgEmployeeRate', '.sg-employer-rate':'sgEmployerRate', '.sg-ow-cap':'sgOwCap', '.sg-annual-cap':'sgAnnualCap', '.sg-reliefs':'sgReliefs', '.cn-bonus-eligible':'cnBonusEligible', '.cn-employee-social':'cnEmployeeSocial', '.cn-employer-social':'cnEmployerSocial', '.cn-housing-rate':'cnEmployeeHousing', '.cn-social-min':'cnSocialMin', '.cn-social-max':'cnSocialMax', '.cn-housing-min':'cnHousingMin', '.cn-housing-max':'cnHousingMax', '.cn-deductions':'cnDeductions', '.housing-cost':'housingCost', '.housing-allowance':'housingAllowance', '.food-cost':'foodCost', '.annual-expenses':'annualExpenses', '.allowance-notes':'allowanceNotes'
+      '.sg-oa-end-age': 'sgOaEndAge',
+      '.retirement-stop-age': 'retirementStopAge', '.sg-cpf-payout-mode': 'sgCpfPayoutMode', '.sg-retirement-sum': 'sgRetirementSum',
+      '.sg-cpf-portion': 'sgCpfPortion', '.sg-cpf-age-band': 'sgCpfAgeBand', '.sg-cpf-share': 'sgCpfShare',
+      '.retirement-current-age': 'retirementCurrentAge', '.retirement-age': 'retirementAge', '.retirement-balance': 'retirementBalance', '.retirement-growth': 'retirementGrowth', '.sg-cpf-life-monthly': 'sgCpfLifeMonthly', '.sg-oa-retained': 'sgOaRetained', '.cn-past-pension-years': 'cnPastPensionYears', '.cn-past-pension-index': 'cnPastPensionIndex', '.cn-average-wage': 'cnAverageWage',
+      '.other-monthly-costs': 'otherMonthlyCosts', '.annual-expenses': 'annualExpenses',
+      '.name':'name', '.location':'location', '.monthly':'monthly', '.months':'months', '.sg-tax-status':'sgTaxStatus', '.sg-employee-rate':'sgEmployeeRate', '.sg-employer-rate':'sgEmployerRate', '.sg-ow-cap':'sgOwCap', '.sg-annual-cap':'sgAnnualCap', '.sg-reliefs':'sgReliefs', '.cn-bonus-eligible':'cnBonusEligible', '.cn-employee-social':'cnEmployeeSocial', '.cn-employer-social':'cnEmployerSocial', '.cn-housing-rate':'cnEmployeeHousing', '.cn-social-min':'cnSocialMin', '.cn-social-max':'cnSocialMax', '.cn-housing-min':'cnHousingMin', '.cn-housing-max':'cnHousingMax', '.cn-deductions':'cnDeductions', '.housing-cost':'housingCost', '.housing-allowance':'housingAllowance', '.food-cost':'foodCost', '.allowance-notes':'allowanceNotes', '.sg-cpf-eligible':'sgCpfEligible'
     };
 
     function render() {
@@ -401,12 +752,35 @@
           if (offer[key] !== undefined) input.type === 'checkbox' ? input.checked = Boolean(offer[key]) : input.value = offer[key];
           input.addEventListener('input', e => {
             const target = offers.find(x => x.id === offer.id);
-            target[key] = e.target.type === 'checkbox' ? e.target.checked : e.target.type === 'number' ? Number(e.target.value) : e.target.value;
+            target[key] = e.target.type === 'checkbox' ? e.target.checked : key === 'sgCpfLifeMonthly' && e.target.value === '' ? null : e.target.type === 'number' ? Number(e.target.value) : e.target.value;
+            if (target.location === 'sg' && ['monthly', 'months', 'sgCpfEligible', 'sgOwCap', 'sgAnnualCap', 'sgCpfAgeBand', 'retirementCurrentAge', 'retirementStopAge', 'retirementAge', 'retirementBalance', 'retirementGrowth', 'sgRetirementSum', 'sgOaRetained'].includes(key)) {
+              target.sgCpfLifeMonthly = null;
+              target.sgCpfPayoutMode = 'auto';
+              q(node, '.sg-cpf-payout-mode').value = 'auto';
+              q(node, '.sg-cpf-life-monthly').value = '';
+            }
+            if (key === 'sgCpfPayoutMode' && target.sgCpfPayoutMode === 'manual' && target.sgCpfLifeMonthly === null) {
+              const reference = calculateRetirement({ ...target, sgCpfPayoutMode: 'auto' }).automaticMonthly;
+              target.sgCpfLifeMonthly = Number.isFinite(reference) ? Math.round(reference * 100) / 100 : 0;
+              q(node, '.sg-cpf-life-monthly').value = target.sgCpfLifeMonthly;
+            }
+            if (key === 'sgCpfLifeMonthly' && target.sgCpfLifeMonthly === null) {
+              target.sgCpfPayoutMode = 'auto';
+              q(node, '.sg-cpf-payout-mode').value = 'auto';
+            }
             if (key === 'cnEmployeeHousing') target.cnEmployerHousing = target.cnEmployeeHousing;
+            if (key === 'sgCpfAgeBand') {
+              [target.sgEmployeeRate, target.sgEmployerRate] = cpfAgeBands[target.sgCpfAgeBand];
+              q(node, '.sg-employee-rate').value = target.sgEmployeeRate;
+              q(node, '.sg-employer-rate').value = target.sgEmployerRate;
+            }
             if (key === 'location') {
               Object.assign(target, defaults[target.location], { id: target.id, name: target.name, location: target.location });
               render();
             } else {
+              if (key === 'sgCpfEligible') q(node, '.sg-cpf-overrides').hidden = !target.sgCpfEligible;
+              q(node, '.sg-cpf-choice-fields').hidden = target.location !== 'sg' || !target.sgCpfEligible;
+              q(node, '.sg-cpf-custom-field').hidden = target.sgCpfPortion !== 'custom';
               if (key === 'monthly' || key === 'months') q(node, '.bonus-equivalent').textContent = t('monthsSplit', Math.max(0, target.months - 12).toFixed(1).replace('.0', ''));
               renderResult(node, target);
               renderSummary();
@@ -414,6 +788,34 @@
           });
         }
         node.querySelectorAll('.sg-fields').forEach(x => x.hidden = offer.location !== 'sg');
+        q(node, '.sg-cpf-choice-fields').hidden = offer.location !== 'sg' || !offer.sgCpfEligible;
+        q(node, '.sg-cpf-custom-field').hidden = offer.sgCpfPortion !== 'custom';
+        q(node, '.sg-cpf-overrides').hidden = !offer.sgCpfEligible;
+        q(node, '.retirement-settings').open = document.getElementById('compare-metric').value === 'retirementIncome';
+        q(node, '.retirement-age').min = offer.location === 'sg' ? 65 : 40;
+        node.querySelectorAll('.sg-oa-mode').forEach(input => {
+          input.name = `oa-mode-${offer.id}`;
+          input.checked = input.value === offer.sgOaWithdrawalMode;
+          input.addEventListener('change', () => {
+            offer.sgOaWithdrawalMode = input.value;
+            renderResult(node, offer);
+            renderSummary();
+          });
+        });
+        q(node, '.reset-retirement').addEventListener('click', () => {
+          for (const [selector, key] of Object.entries(fieldMap)) {
+            if (/^(retirement|sgCpfLife|sgRetirement|sgOa|sgCpfPayoutMode|cnPastPension|cnAverageWage)/.test(key) && key in defaults[offer.location]) {
+              offer[key] = defaults[offer.location][key];
+              q(node, selector).value = offer[key] ?? '';
+            }
+          }
+          if (offer.location === 'sg') {
+            offer.sgOaWithdrawalMode = defaults.sg.sgOaWithdrawalMode;
+            node.querySelectorAll('.sg-oa-mode').forEach(input => input.checked = input.value === offer.sgOaWithdrawalMode);
+          }
+          renderResult(node, offer);
+          renderSummary();
+        });
         node.querySelectorAll('.cn-fields').forEach(x => x.hidden = offer.location !== 'cn');
         node.querySelectorAll('.currency').forEach(x => x.textContent = offer.location === 'sg' ? 'SGD' : 'CNY');
         q(node, '.bonus-equivalent').textContent = t('monthsSplit', Math.max(0, offer.months - 12).toFixed(1).replace('.0', ''));
@@ -449,49 +851,87 @@
             <div class="metric"><span>${t('incomeTax')}</span><strong>− ${fmt(r.tax, r.currency)}</strong></div>
             <div class="metric"><span>${t('yourContributions')}</span><strong>− ${fmt(r.employee, r.currency)}</strong></div>
           </div>
-          <div class="adjusted-line"><span>${t('afterCostsAllowances')}</span><strong>${fmt(r.adjustedTakeHome, r.currency)}</strong></div>
+          ${r.taxMethod ? `<p class="field-help">${t('taxMethod')}: ${r.taxMethod}</p>` : ''}
+          <div class="adjusted-line"><span>${t('cashLeft')}</span><strong>${fmt(r.adjustedTakeHome, r.currency)}</strong></div>
           <div class="field-help">${t('livingCosts')} −${fmt(r.annualCosts, r.currency)} · ${t('companyOffsets')} +${fmt(r.allowances, r.currency)}${offer.allowanceNotes ? ` · ${escapeHtml(offer.allowanceNotes)}` : ''}</div>
-          <div class="pension-note"><span class="account-value">${r.note}</span> · ${t('totalEmployerCost')} ${fmt(r.employerCost, r.currency)}</div>`;
+          <div class="field-help">${t('monthlyCashLeft')}: ${fmt(r.adjustedTakeHome / 12, r.currency)}</div>
+          <div class="adjusted-line"><span>${t('cashPlusFunds')}</span><strong>${fmt(r.adjustedTotalValue, r.currency)}</strong></div>
+          <p class="field-help">${t('combinedShortHelp')}</p>
+          <p class="field-help">${offer.location === 'sg' ? t('selectedCpfNote', t(offer.sgCpfPortion === 'oa' ? 'cpfOaOnly' : offer.sgCpfPortion === 'custom' ? 'cpfCustom' : 'cpfAll'), r.cpfPercent.toFixed(2).replace(/\.00$/, ''), fmt(r.includedAccount, r.currency)) : `${t('includedFunds')}: ${fmt(r.includedAccount, r.currency)}`}</p>
+          <div class="pension-note">
+            <p class="account-value">${r.note}</p>
+            ${offer.location === 'sg' ? `<div class="breakdown"><div class="metric"><span>${t('cpfOa')}</span><strong>${fmt(r.cpfOa, r.currency)}</strong></div><div class="metric"><span>${t('cpfSpecial')}</span><strong>${fmt(r.cpfSpecial, r.currency)}</strong></div><div class="metric"><span>${t('cpfMedical')}</span><strong>${fmt(r.cpfMedical, r.currency)}</strong></div></div><p class="field-help">${t('cpfSplitHelp')}</p>` : ''}
+            ${offer.location === 'cn' ? `<p>${t('employeeInsurance')}: ${fmt(r.employeeSocial, r.currency)} · ${t('employerInsurance')}: ${fmt(r.employerSocial, r.currency)}<br>${t('socialPremiumsHelp')}</p>` : ''}
+          </div>`;
+      const pension = r.retirement;
+      const oaNote = q(node, '.oa-choice-note');
+      oaNote.textContent = '';
+      if (offer.location === 'sg' && Number.isFinite(pension.oaAtDrawStart)) {
+        oaNote.textContent = t('oaChoiceAvailable', fmt(pension.oaAtDrawStart, r.currency), pension.drawStart);
+        if (pension.oaAtDrawStart === 0) oaNote.textContent += ` ${t('oaChoiceEmpty')}`;
+        if (offer.sgOaRetained === 0) oaNote.textContent += ` ${t('oaNoneRetained')}`;
+      }
+      q(node, '.sg-oa-end-age').min = Math.max(56, offer.retirementAge + 1);
+      q(node, '.sg-cpf-manual-field').hidden = offer.location !== 'sg' || offer.sgCpfPayoutMode !== 'manual';
+      q(node, '.retirement-result').innerHTML = (Number.isInteger(pension.stop) ? `<p class="field-help">${t('workPeriod', pension.start, pension.stop, pension.age)}</p>` : '') + (pension.annual === null
+        ? `<p class="field-help">${pension.reason === 'pensionYearsShort' ? t(pension.reason, pension.service, pension.minimum) : t(pension.reason)}</p>`
+        : `<div class="adjusted-line"><span>${t(offer.location === 'sg' ? 'sgRetirementTotal' : 'shanghaiPension')}</span><strong>${fmt(pension.annual, r.currency)} / ${language === 'zh' ? '年' : 'year'}</strong></div>
+          <p class="field-help">${t('projectionMoney')} · ${t('monthlyRetirement')}: ${fmt(pension.annual / 12, r.currency)}<br>${offer.location === 'sg' ? `${t('cpfAnnualIncome')}: ${fmt(pension.cpfAnnual, r.currency)} · ${t('oaAnnualSpending')}: ${fmt(pension.oaAnnual, r.currency)}<br>${t('sgIncomePeriod', pension.age, pension.drawEnd)}<br>${t('oaAfterEnd', pension.drawEnd, fmt(pension.cpfAnnual, r.currency))}` : `${t('pensionPeriod', pension.age, pension.service)}<br>${t('cnPensionAssumption', pension.futureYears, fmt(pension.socialBase, r.currency))}<br>${t('basicPension')}: ${fmt(pension.basic, r.currency)} · ${t('individualPension')}: ${fmt(pension.individual, r.currency)}`}</p>`);
+      if (pension.stop < pension.age) q(node, '.retirement-result').innerHTML += `<p class="field-help">${offer.location === 'sg' ? t('sgBridgePeriod', pension.stop, pension.drawStart, pension.age) : t('bridgePeriod', pension.stop, pension.age)}</p>`;
+      if (offer.location === 'sg' && Number.isFinite(pension.balance)) {
+        q(node, '.retirement-result').innerHTML += `<p class="field-help">${t('oaPlanPeriod', pension.drawStart, pension.drawEnd, fmt(pension.oaAnnual, r.currency))}${pension.drawStart < pension.age ? `<br>${t('oaBeforePension', pension.drawStart, pension.age, fmt(pension.oaAnnual, r.currency))}` : ''}<br>${t('oaAtStart')}: ${fmt(pension.oaAtDrawStart, r.currency)}<br>${t('savingsAtStop')}: ${fmt(pension.balanceAtStop, r.currency)}<br>${t('raFunding')}: ${fmt(pension.raFunded, r.currency)}<br>${t('cpfRaBalance')}: ${fmt(pension.raBalance, r.currency)}<br>${t(offer.sgOaWithdrawalMode === 'keep' ? 'oaRemainingAccount' : 'oaRemainingCash')}: ${fmt(pension.otherBalance, r.currency)}</p>`;
+        if (pension.raFunded < offer.sgRetirementSum - .01) q(node, '.retirement-result').innerHTML += `<p class="field-help">${t('raShortfall', fmt(pension.raFunded, r.currency), fmt(offer.sgRetirementSum, r.currency))}</p>`;
+      }
+      if (offer.location === 'cn' && Number.isFinite(pension.balance)) q(node, '.retirement-result').innerHTML += `<p class="field-help">${t('retirementPot')}: ${fmt(pension.balance, r.currency)}</p>`;
     }
 
     function renderSummary() {
       const fx = Number(document.getElementById('fx').value) || 5.6;
       const displayCurrency = document.getElementById('display-currency').value;
-      const metric = document.getElementById('compare-metric').value;
+      const metric = normalizeMetric(document.getElementById('compare-metric').value);
+      document.getElementById('compare-metric').value = metric;
+      document.getElementById('metric-help').textContent = t(comparisonMetrics[metric].help);
+      document.getElementById('bonus-assumption').hidden = metric === 'retirementIncome';
       const rows = offers.map(o => ({ offer: o, result: calculate(o) }));
-      const values = rows.map(x => x.result[metric] * (x.result.currency === displayCurrency ? 1 : displayCurrency === 'CNY' ? fx : 1 / fx));
-      document.getElementById('bars-title').textContent = metric === 'takeHome' ? t('annualTakeHome') : t(metric === 'adjustedTotalValue' ? 'cashAndAccounts' : 'afterCosts');
-      document.getElementById('best-title').textContent = t(metric === 'takeHome' ? 'bestCash' : metric === 'adjustedTotalValue' ? 'bestTotal' : 'bestAdjusted');
-      document.getElementById('best-context').textContent = t(metric === 'takeHome' ? 'afterTaxDeductions' : metric === 'adjustedTotalValue' ? 'cashAccountsContext' : 'afterTaxCosts');
+      const exchange = result => result.currency === displayCurrency ? 1 : displayCurrency === 'CNY' ? fx : 1 / fx;
+      const values = rows.map(x => x.result[metric] === null ? null : x.result[metric] * exchange(x.result));
+      document.getElementById('bars-title').textContent = t(comparisonMetrics[metric].label);
       const baselineSelect = document.getElementById('baseline-offer');
       const previousBaseline = baselineSelect.value;
       baselineSelect.innerHTML = rows.map(x => `<option value="${x.offer.id}">${escapeHtml(x.offer.name)}</option>`).join('');
       baselineSelect.value = rows.some(x => x.offer.id === previousBaseline) ? previousBaseline : rows[0]?.offer.id || '';
       const baselineIndex = rows.findIndex(x => x.offer.id === baselineSelect.value);
-      const baselineValue = values[baselineIndex] || 0;
-      const max = Math.max(...values, 1);
-      document.getElementById('bars').innerHTML = rows.length ? rows.map((x, i) => `
+      const baselineValue = values[baselineIndex];
+      document.getElementById('baseline-name').textContent = rows.length ? `${t('vsBaseline')} · ${rows[baselineIndex].offer.name}` : '';
+      const availableValues = values.filter(value => value !== null);
+      const min = Math.min(...availableValues, 0), max = Math.max(...availableValues, 0);
+      document.getElementById('bars').innerHTML = rows.length ? rows.map((x, i) => {
+        if (values[i] === null) return `<div class="bar-row"><strong>${escapeHtml(x.offer.name)}</strong><p class="field-help">${x.result.retirement.reason === 'pensionYearsShort' ? t('pensionYearsShort', x.result.retirement.service, x.result.retirement.minimum) : t(x.result.retirement.reason)}</p></div>`;
+        const position = barPosition(values[i], min, max);
+        const percentage = baselineValue === null ? '—' : percentDifference(values[i], baselineValue, i === baselineIndex);
+        return `
         <div class="bar-row"><div class="bar-label"><strong>${escapeHtml(x.offer.name)}</strong><small>${t(x.offer.location === 'sg' ? 'singapore' : 'shanghai')}</small></div>
-        <div class="track" role="img" aria-label="${escapeHtml(x.offer.name)}: ${Math.round(values[i]).toLocaleString()} ${displayCurrency}; ${percentDifference(values[i], baselineValue, i === baselineIndex)}"><div class="fill ${x.offer.location}" style="width:${Math.max(2, values[i] / max * 100)}%"></div></div>
-        <div class="bar-value">${fmt(values[i], displayCurrency)}<small>${percentDifference(values[i], baselineValue, i === baselineIndex)}</small></div></div>`).join('') : `<div class="empty">${t('emptyOffers')}</div>`;
-      const bestIndex = values.indexOf(Math.max(...values));
-      document.getElementById('best').innerHTML = rows.length ? `<div class="headline-number">${fmt(values[bestIndex], displayCurrency)}</div><div class="headline-label">${escapeHtml(rows[bestIndex].offer.name)} · ${percentDifference(values[bestIndex], baselineValue, bestIndex === baselineIndex)} ${t('vsBaseline')}</div>` : `<div class="empty">${t('noOffers')}</div>`;
-      document.getElementById('comparison-body').innerHTML = rows.map(x => `<tr><td>${escapeHtml(x.offer.name)}</td><td>${fmt(x.result.gross,x.result.currency)}</td><td>${fmt(x.result.tax,x.result.currency)}</td><td>${fmt(x.result.employee,x.result.currency)}</td><td><strong>${fmt(x.result.takeHome,x.result.currency)}</strong></td><td>${fmt(x.result.annualCosts,x.result.currency)}</td><td>${fmt(x.result.allowances,x.result.currency)}</td><td><strong>${fmt(x.result.adjustedTakeHome,x.result.currency)}</strong></td><td>${fmt(x.result.account,x.result.currency)}</td><td>${fmt(x.result.employer,x.result.currency)}</td><td>${fmt(x.result.employerCost,x.result.currency)}</td></tr>`).join('');
+        <div class="track" role="img" style="--zero:${position.zero}%" aria-label="${escapeHtml(x.offer.name)}: ${Math.round(values[i]).toLocaleString()} ${displayCurrency}; ${percentage}"><div class="fill ${x.offer.location}" style="left:${position.left}%;width:${position.width}%"></div></div>
+        <div class="bar-value">${fmt(values[i], displayCurrency)}<small>${percentage}</small></div>${metric === 'adjustedTotalValue' ? `<div class="field-help wide">${t('includedFunds')}: ${fmt(x.result.includedAccount * exchange(x.result), displayCurrency)}${x.offer.location === 'sg' ? ` · ${t(x.offer.sgCpfPortion === 'oa' ? 'cpfOaOnly' : x.offer.sgCpfPortion === 'custom' ? 'cpfCustom' : 'cpfAll')}` : ''}</div>` : ''}${metric === 'retirementIncome' ? `<div class="field-help wide">${x.offer.location === 'sg' ? `${t('sgIncomePeriod', x.result.retirement.age, x.result.retirement.drawEnd)} ${t('cpfAnnualIncome')}: ${fmt(x.result.retirement.cpfAnnual * exchange(x.result), displayCurrency)} · ${t('oaAnnualSpending')}: ${fmt(x.result.retirement.oaAnnual * exchange(x.result), displayCurrency)}` : t('cnPensionAssumption', x.result.retirement.futureYears, fmt(x.result.retirement.socialBase, x.result.currency))}</div>` : ''}</div>`;
+      }).join('') : `<div class="empty">${t('emptyOffers')}</div>`;
+      document.getElementById('differences').innerHTML = rows.length > 1 ? rows.map((x, i) => {
+        if (i === baselineIndex) return '';
+        if (values[i] === null || baselineValue === null) return `<div class="difference-row"><strong>${escapeHtml(x.offer.name)}</strong><p class="field-help">${t('retirementUnavailable')}</p></div>`;
+        const difference = values[i] - baselineValue;
+        return `<div class="difference-row"><strong>${escapeHtml(x.offer.name)}</strong><div class="headline-number">${difference > 0 ? '+' : ''}${fmt(difference, displayCurrency)}</div>${metric === 'adjustedTakeHome' || metric === 'takeHome' ? `<p class="headline-label">${difference > 0 ? '+' : ''}${fmt(difference / 12, displayCurrency)} · ${t('averageMonthlyDifference')}</p>` : ''}</div>`;
+      }).join('') : `<p class="empty">${t(rows.length ? 'addAnotherOffer' : 'noOffers')}</p>`;
+      document.getElementById('comparison-body').innerHTML = rows.map(x => `<tr><td>${escapeHtml(x.offer.name)}</td><td>${fmt(x.result.gross,x.result.currency)}</td><td>${fmt(x.result.tax,x.result.currency)}</td><td>${fmt(x.result.employee,x.result.currency)}</td><td><strong>${fmt(x.result.takeHome,x.result.currency)}</strong></td><td>${fmt(x.result.annualCosts,x.result.currency)}</td><td>${fmt(x.result.allowances,x.result.currency)}</td><td><strong>${fmt(x.result.adjustedTakeHome,x.result.currency)}</strong></td><td>${fmt(x.result.account,x.result.currency)}</td><td>${fmt(x.result.includedAccount,x.result.currency)}</td><td><strong>${fmt(x.result.adjustedTotalValue,x.result.currency)}</strong></td><td>${x.result.retirementIncome === null ? t('retirementUnavailable') : fmt(x.result.retirementIncome,x.result.currency)}</td><td>${fmt(x.result.employeeSocial,x.result.currency)}</td><td>${fmt(x.result.employerSocial,x.result.currency)}</td><td>${fmt(x.result.employer,x.result.currency)}</td></tr>`).join('');
       saveState();
-    }
-
-    function percentDifference(value, baseline, isBaseline) {
-      if (isBaseline) return t('baseline');
-      if (!baseline) return '—';
-      const difference = (value / baseline - 1) * 100;
-      return `${difference >= 0 ? '+' : ''}${difference.toFixed(1)}%`;
     }
 
     function escapeHtml(value) { const el = document.createElement('span'); el.textContent = value; return el.innerHTML; }
     document.getElementById('add').addEventListener('click', () => { const n = offers.length + 1; offers.push({ ...defaults.sg, id: crypto.randomUUID(), name: t('offerN', n) }); render(); });
     document.getElementById('fx').addEventListener('input', renderSummary);
     document.getElementById('display-currency').addEventListener('change', renderSummary);
-    document.getElementById('compare-metric').addEventListener('change', renderSummary);
+    document.getElementById('compare-metric').addEventListener('change', () => {
+      if (document.getElementById('compare-metric').value === 'retirementIncome') document.querySelectorAll('.retirement-settings').forEach(detail => detail.open = true);
+      renderSummary();
+    });
     document.getElementById('baseline-offer').addEventListener('change', renderSummary);
     document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
     document.getElementById('lang-zh').addEventListener('click', () => setLanguage('zh'));
@@ -528,7 +968,7 @@
         const settings = data.settings || {};
         if (Number(settings.fx) > 0) document.getElementById('fx').value = Number(settings.fx);
         if (['CNY', 'SGD'].includes(settings.displayCurrency)) document.getElementById('display-currency').value = settings.displayCurrency;
-        if (['adjustedTakeHome', 'takeHome', 'adjustedTotalValue'].includes(settings.compareMetric)) document.getElementById('compare-metric').value = settings.compareMetric;
+        document.getElementById('compare-metric').value = normalizeMetric(settings.compareMetric);
         render();
         if (offers.some(offer => offer.id === settings.baselineOffer)) document.getElementById('baseline-offer').value = settings.baselineOffer;
         renderSummary();
@@ -543,8 +983,140 @@
       console.assert(cnBonusTax(36000) === 1080, 'China bonus threshold check');
       const sg = calculateSg({ ...defaults.sg, monthly: 10000, months: 13 });
       console.assert(sg.employee === 20400, 'CPF annual ceiling check');
+      console.assert(sg.account === sg.employee + sg.employer, 'CPF account includes employee and employer contributions');
+      const foreignOffer = { ...defaults.sg, sgCpfEligible: false };
+      const foreign = calculate(foreignOffer);
+      console.assert(foreign.employee === 0 && foreign.employer === 0 && foreign.account === 0, 'Foreign employees have no employee or employer CPF');
+      console.assert(Math.abs(foreign.tax - 3210) < .01 && foreign.takeHome === 74790, 'No CPF deduction or tax relief for a foreign tax resident');
+      console.assert(calculateSg({ ...foreignOffer, sgTaxStatus: 'nonresident' }).tax === 11700, 'CPF eligibility is separate from tax residency');
+      console.assert(foreign.regularTakeHome * 12 + foreign.bonusTakeHome === foreign.takeHome, 'No-CPF salary and bonus reconcile to annual cash');
+      console.assert(normalizeOffer({ location: 'sg' }).sgCpfEligible === true, 'Older saves keep CPF enabled');
+      console.assert(normalizeOffer(JSON.parse(JSON.stringify(foreignOffer))).sgCpfEligible === false, 'CPF toggle survives saving and JSON import');
+      const china = calculate(defaults.cn);
+      console.assert(china.account === 50400 && china.account === china.employeeHousing + china.employerHousing, 'Shanghai account includes housing fund only');
+      console.assert(china.employer === china.employerSocial + china.employerHousing, 'Employer contributions include housing fund and social insurance');
       const food = calculate({ ...defaults.sg, foodCost: 150 });
       console.assert(food.allowances === 0 && food.annualCosts === 7800, 'Weekly food cost check');
+      for (const location of ['sg', 'cn']) {
+        const base = calculate(defaults[location]);
+        const costs = calculate({ ...defaults[location], housingCost: 1000, foodCost: 100, otherMonthlyCosts: 300, annualExpenses: 2400, housingAllowance: 100 });
+        console.assert(costs.annualCosts === 23200 && costs.allowances === 1200 && costs.adjustedTakeHome === base.takeHome - 22000, `${location}: monthly and annual costs counted once`);
+        console.assert(costs.tax === base.tax && costs.account === base.account && costs.employer === base.employer, `${location}: living costs leave payroll and contributions unchanged`);
+        const restored = normalizeOffer(JSON.parse(JSON.stringify({ location, otherMonthlyCosts: 300, annualExpenses: 2400 })));
+        console.assert(restored.otherMonthlyCosts === 300 && restored.annualExpenses === 2400, `${location}: new expenses survive export/import`);
+        console.assert(normalizeOffer({ location }).annualExpenses === 0 && normalizeOffer({ location }).otherMonthlyCosts === 0, `${location}: older saves have zero new costs`);
+        console.assert(calculate({ ...defaults[location], otherMonthlyCosts: -100, annualExpenses: -100 }).annualCosts === 0, `${location}: new costs cannot add income`);
+      }
+      const sgExample = calculate({ ...defaults.sg, monthly: 8000, months: 15 });
+      const cnExample = calculate({ ...defaults.cn, monthly: 40000, months: 16 });
+      console.assert(Math.abs(cnExample.adjustedTakeHome - sgExample.adjustedTakeHome * 5.6 + 49203.655) < .01, 'Example cross-currency annual cash difference');
+      console.assert(sgExample.account === 37740 && Math.abs(cnExample.account - 62667.36) < .01, 'CPF and housing fund stay separate from cash and social insurance');
+      console.assert(normalizeMetric('employerCost') === 'adjustedTakeHome' && normalizeMetric('__proto__') === 'adjustedTakeHome', 'Removed and unknown metrics default to cash after costs');
+      console.assert(normalizeMetric('account') === 'account', 'Contribution metric survives saving');
+      console.assert(normalizeMetric('adjustedTotalValue') === 'adjustedTotalValue' && normalizeMetric('retirementIncome') === 'retirementIncome', 'Combined and retirement modes survive saving');
+      console.assert(sgExample.adjustedTotalValue === sgExample.adjustedTakeHome + 37740 && Math.abs(cnExample.adjustedTotalValue - cnExample.adjustedTakeHome - 62667.36) < .01, 'Combined totals include only cash after costs and CPF or housing deposits');
+      console.assert(foreign.adjustedTotalValue === foreign.adjustedTakeHome, 'No CPF is added when CPF eligibility is off');
+      const sgHousing = calculate({ ...defaults.sg, monthly: 8000, months: 15, sgCpfPortion: 'oa' });
+      console.assert(Math.abs(sgHousing.includedAccount - 23462.958) < .01 && sgHousing.includedAccount === sgHousing.cpfOa, 'Housing comparison includes the OA share of employee and employer CPF');
+      console.assert(Math.abs(sgHousing.cpfOa + sgHousing.cpfSpecial + sgHousing.cpfMedical - sgHousing.account) < .01, 'OA, SA or RA, and MediSave reconcile to total CPF');
+      console.assert(sgHousing.adjustedTotalValue === sgHousing.adjustedTakeHome + sgHousing.cpfOa && sgHousing.tax === sgExample.tax && sgHousing.employee === sgExample.employee && sgHousing.account === sgExample.account, 'CPF portion changes the comparison but not payroll, tax or total contributions');
+      for (const [share, expected] of [[0,0],[50,18870],[100,37740],[-5,0],[150,37740]]) {
+        const custom = calculate({ ...defaults.sg, monthly: 8000, months: 15, sgCpfPortion: 'custom', sgCpfShare: share });
+        console.assert(custom.includedAccount === expected && custom.tax === sgExample.tax && custom.takeHome === sgExample.takeHome, `Custom CPF share ${share}: bounded comparison without changing tax or cash`);
+      }
+      console.assert(calculate({ ...defaults.sg, sgCpfPortion: 'oa', sgCpfEligible: false }).includedAccount === 0, 'Housing portion is zero when CPF eligibility is off');
+      console.assert(cnExample.includedAccount === cnExample.account && calculate({ ...defaults.cn, sgCpfPortion: 'custom', sgCpfShare: 0 }).includedAccount === china.account, 'China continues to include its housing fund only');
+      const olderCpf = calculate(normalizeOffer({ location: 'sg', monthly: 8000, months: 15, sgCpfAgeBand: '60', sgCpfPortion: 'oa' }));
+      console.assert(olderCpf.employee === 18360 && olderCpf.employer === 16320 && Math.abs(olderCpf.includedAccount - 12242.04) < .01, 'Age 56–60 uses its contribution rates and 35.3% OA allocation');
+      const oldestCpf = calculate(normalizeOffer({ location: 'sg', monthly: 8000, months: 15, sgCpfAgeBand: '120', sgCpfPortion: 'oa' }));
+      console.assert(oldestCpf.account === 12750 && Math.abs(oldestCpf.includedAccount - 1020) < .01, 'Above 70 uses its standard contribution and OA allocation rates');
+      const portionRestored = normalizeOffer(JSON.parse(JSON.stringify({ ...defaults.sg, sgCpfPortion: 'custom', sgCpfShare: 50, sgCpfAgeBand: '45' })));
+      console.assert(portionRestored.sgCpfPortion === 'custom' && portionRestored.sgCpfShare === 50 && portionRestored.sgCpfAgeBand === '45', 'CPF portion, custom percentage and age band survive saving and import');
+      console.assert(normalizeOffer({ location: 'sg' }).sgCpfPortion === 'all' && normalizeOffer({ location: 'sg' }).sgCpfAgeBand === '35', 'Older saves retain the all-CPF comparison and original age-band assumption');
+      console.assert(normalizeOffer({ location: 'sg', sgCpfAgeBand: '__proto__', sgCpfPortion: '__proto__' }).sgCpfAgeBand === '35' && normalizeOffer({ location: 'sg', sgCpfPortion: '__proto__' }).sgCpfPortion === 'all', 'Invalid imported CPF selections use valid defaults');
+      console.assert(normalizeOffer({ location: 'sg', sgCpfShare: -10 }).sgCpfShare === 0 && normalizeOffer({ location: 'sg', sgCpfShare: 200 }).sgCpfShare === 100, 'Imported CPF percentages stay within zero to one hundred');
+      console.assert(normalizeOffer({ location: 'sg', sgCpfAgeBand: '60', sgEmployeeRate: 10, sgEmployerRate: 11 }).sgEmployeeRate === 10, 'Saved contribution-rate overrides are preserved');
+      const oneYearCpf = { ...defaults.sg, monthly: 8000, months: 15, retirementCurrentAge: 64, retirementStopAge: 65, retirementAge: 65, retirementGrowth: 0 };
+      const cpfProjection = calculateRetirement(oneYearCpf);
+      console.assert(cpfProjection.balance === 11220 && cpfProjection.annual === null && cpfProjection.reason === 'cpfReferenceRange', 'A balance below the published reference range is not turned into an invented payout');
+      console.assert(Math.abs(calculateRetirement({ ...oneYearCpf, sgOaRetained: 100 }).balance - 14790) < .01, 'Retained OA increases the retirement pot while MediSave stays excluded');
+      console.assert(calculateRetirement({ ...oneYearCpf, retirementBalance: 1000, retirementGrowth: 1.5 }).balance === 12235, 'Existing retirement savings grow before end-year deposits');
+      const quotedCpf = { ...oneYearCpf, sgCpfPayoutMode: 'manual', sgCpfLifeMonthly: 2000 };
+      console.assert(calculateRetirement(quotedCpf).annual === 24000, 'Annual CPF LIFE income equals the entered monthly payout times twelve');
+      console.assert(calculateRetirement({ ...quotedCpf, monthly: 20000, retirementBalance: 500000, drawdownEndAge: 105 }).cpfAnnual === 24000, 'Salary, account balance and a legacy death age are never added to the CPF LIFE component');
+      console.assert(calculateRetirement({ ...quotedCpf, sgRetirementInflation: 2 }).annual === 24000, 'Legacy inflation settings do not discount a monthly pension quote');
+      console.assert(calculateRetirement({ ...oneYearCpf, sgCpfEligible: false }).balance === 0 && calculateRetirement({ ...oneYearCpf, sgCpfEligible: false }).annual === 0, 'Zero existing savings and no new CPF give a zero automatic payout');
+      console.assert(calculateRetirement({ ...quotedCpf, sgCpfLifeMonthly: 0 }).annual === 0 && calculateRetirement({ ...quotedCpf, sgCpfLifeMonthly: null }).annual === null, 'An explicit manual zero remains distinct from an invalid manual payout');
+      console.assert(normalizeOffer({ location: 'sg' }).sgCpfPayoutMode === 'auto' && normalizeOffer({ location: 'sg', sgCpfLifeMonthly: '' }).sgCpfPayoutMode === 'auto', 'Older blank CPF LIFE inputs use automatic estimates');
+      console.assert(normalizeOffer(JSON.parse(JSON.stringify(quotedCpf))).sgCpfLifeMonthly === 2000 && normalizeOffer({ location: 'sg', sgCpfLifeMonthly: 0 }).sgCpfLifeMonthly === 0, 'CPF LIFE payout and explicit zero survive saving and import');
+      const cnProjectionOffer = { ...defaults.cn, monthly: 10000, cnSocialMin: 0, cnSocialMax: 50000, cnAverageWage: 10000, retirementCurrentAge: 30, retirementStopAge: 60, retirementAge: 60, retirementGrowth: 0 };
+      const cnProjection = calculateRetirement(cnProjectionOffer);
+      console.assert(cnProjection.balance === 288000 && cnProjection.basic === 36000 && Math.abs(cnProjection.individual - 288000 / 139 * 12) < .01, 'Shanghai formula includes basic pension and the 8% individual account');
+      console.assert(calculateRetirement({ ...cnProjectionOffer, cnEmployerSocial: 50 }).annual === cnProjection.annual, 'Employer social premiums are not added to the pension account');
+      console.assert(calculateRetirement({ ...cnProjectionOffer, cnEmployeeSocial: 0 }).annual === null, 'No China service means pension eligibility is not assumed');
+      console.assert(calculateRetirement({ ...cnProjectionOffer, retirementCurrentAge: 59 }).reason === 'pensionYearsShort', 'Insufficient service is unavailable, not a zero pension');
+      console.assert(calculateRetirement({ ...cnProjectionOffer, retirementCurrentAge: 40, cnPastPensionYears: 10, cnPastPensionIndex: 1, retirementBalance: 96000 }).annual === cnProjection.annual, 'Past pension service and account balances reconcile with future contributions');
+      for (const location of ['sg', 'cn']) {
+        const offer = { ...defaults[location], retirementBalance: 12345, retirementGrowth: 2 };
+        const restored = normalizeOffer(JSON.parse(JSON.stringify(offer)));
+        console.assert(restored.retirementBalance === 12345 && restored.retirementGrowth === 2 && restored.retirementAge === offer.retirementAge, `${location}: retirement assumptions survive saving and import`);
+        console.assert(normalizeOffer({ location }).retirementBalance === 0, `${location}: older saves get a zero starting pension balance`);
+        console.assert(calculateRetirement({ ...offer, retirementCurrentAge: 75 }).annual === null && calculateRetirement({ ...offer, retirementAge: 30 }).annual === null, `${location}: invalid ages do not produce retirement income`);
+        console.assert(calculateRetirement({ ...offer, retirementGrowth: 99 }).annual === null && calculateRetirement({ ...offer, retirementBalance: -1 }).annual === null, `${location}: invalid retirement money assumptions are rejected`);
+      }
+      console.assert(calculateRetirement({ ...quotedCpf, sgCpfLifeMonthly: -1 }).annual === null && calculateRetirement({ ...quotedCpf, sgCpfLifeMonthly: NaN }).annual === null, 'Invalid CPF LIFE payouts do not appear as income');
+      console.assert(cpfReferenceMonthly(220400, 65) === 1780 && cpfReferenceMonthly(220400, 70) === 2380 && cpfReferenceMonthly(440800, 65) === 3440, 'Age-55 reference reproduces the published FRS and maximum ERS examples');
+      console.assert(cpfReferenceMonthly(1, 65) === null && cpfReferenceMonthly(700000, 65) === null && cpfReferenceMonthly(0, 65) === 0, 'Reference estimates do not extrapolate beyond published balances');
+      const earlyCpf = calculateRetirement(defaults.sg), earlyChina = calculateRetirement(defaults.cn);
+      console.assert(earlyCpf.oaAtDrawStart === 0 && calculateRetirement({ ...defaults.sg, sgOaWithdrawalMode: 'keep' }).annual === earlyCpf.annual, 'With no excess OA savings, either withdrawal choice gives the same retirement income');
+      console.assert(earlyCpf.start === 25 && earlyCpf.stop === 50 && earlyCpf.age === 65 && earlyCpf.annual > 0, 'Default work ages 25–50 get an automatic CPF estimate from age 65');
+      console.assert(earlyChina.stop === 50 && earlyChina.service === 25 && earlyChina.annual > 0, 'Default work ages 25–50 meet the future China minimum service requirement');
+      console.assert(calculateRetirement({ ...defaults.cn, retirementStopAge: 40 }).reason === 'pensionYearsShort', 'A shorter fifteen-year China career remains below the future minimum');
+      console.assert(Math.abs(earlyCpf.balance - earlyCpf.raBalance - earlyCpf.otherBalance) < .01, 'CPF annuity money and other unused savings remain separate');
+      const noGrowthEarly = calculateRetirement({ ...defaults.sg, monthly: 8000, months: 15, retirementStopAge: 40, retirementGrowth: 0 });
+      console.assert(Math.abs(noGrowthEarly.balance - (37740 * .1621 * 10 + 37740 * .1891 * 5)) < .01, 'CPF deposits stop after exactly fifteen working years');
+      const cappedCpf = calculateRetirement({ ...defaults.sg, retirementCurrentAge: 54, retirementStopAge: 54, retirementBalance: 500000, retirementGrowth: 0 });
+      console.assert(cappedCpf.raFunded === 440800 && cappedCpf.oaAtDrawStart === 59200 && cappedCpf.oaAnnual === 2368 && cappedCpf.otherBalance === 35520, 'Age-55 ERS excess is spread as cash from 55 to 80, with ten years spent before pension starts');
+      const fullErs = { ...defaults.sg, monthly: 0, retirementCurrentAge: 55, retirementStopAge: 55, retirementAge: 65, retirementBalance: 600000 };
+      const cashErs = calculateRetirement(fullErs), keptErs = calculateRetirement({ ...fullErs, sgOaWithdrawalMode: 'keep' });
+      console.assert(cashErs.raFunded === 440800 && cashErs.cpfAnnual === 41280 && cashErs.oaAtDrawStart === 159200 && cashErs.oaAnnual === 6368 && cashErs.otherBalance === 95520, 'A 600k pot funds ERS and spreads 159200 of excess cash over 25 years');
+      console.assert(keptErs.cpfAnnual === cashErs.cpfAnnual && keptErs.raBalance === cashErs.raBalance && keptErs.oaAnnual > cashErs.oaAnnual && cashErs.annual === cashErs.cpfAnnual + cashErs.oaAnnual, 'The two OA choices affect only savings spending, never the lifelong pension');
+      console.assert(Math.abs(159200 * 1.025 ** 25 - keptErs.oaAnnual * (1.025 ** 25 - 1) / .025) < .01, 'Gradual OA withdrawals consume the pot at the chosen end age with 2.5% annual interest');
+      const longerLife = calculateRetirement({ ...fullErs, sgOaEndAge: 90 });
+      console.assert(longerLife.cpfAnnual === cashErs.cpfAnnual && longerLife.oaAnnual === 159200 / 35, 'A longer life expectancy spreads only the excess savings, not CPF LIFE');
+      console.assert(cashErs.raBalance > 440800 && cashErs.drawStart === 55 && calculateRetirement({ ...fullErs, retirementStopAge: 60 }).drawStart === 60, 'RA interest may exceed ERS, and OA spending starts no earlier than stopping work or 55');
+      const lateFunding = calculateRetirement({ ...defaults.sg, monthly: 8000, months: 15, retirementCurrentAge: 55, retirementStopAge: 60, retirementAge: 65, retirementBalance: 400000 });
+      console.assert(lateFunding.raFunded === 440800 && lateFunding.oaAtDrawStart > 0, 'RA interest does not consume top-up room and redirected retirement deposits are retained');
+      for (const invalidEnd of [65, 50, 80.5, 121, NaN]) console.assert(calculateRetirement({ ...fullErs, sgOaEndAge: invalidEnd }).reason === 'oaAgeError', 'Invalid OA spending end age is rejected');
+      const legacyRa = normalizeOffer({ location: 'sg', monthly: 8200, sgRetirementSum: 220400 });
+      console.assert(legacyRa.sgRetirementSum === 440800 && legacyRa.sgOaWithdrawalMode === 'withdraw' && legacyRa.sgOaEndAge === 80 && legacyRa.monthly === 8200, 'Old default FRS migrates once to the max-RA scenario without changing salary');
+      console.assert(normalizeOffer({ ...defaults.sg, sgRetirementSum: 220400 }).sgRetirementSum === 220400, 'New explicit funding-limit overrides survive saving');
+      const savedOa = normalizeOffer(JSON.parse(JSON.stringify({ ...defaults.sg, sgOaWithdrawalMode: 'keep', sgOaEndAge: 90 })));
+      console.assert(savedOa.sgOaWithdrawalMode === 'keep' && savedOa.sgOaEndAge === 90 && normalizeOffer({ ...defaults.sg, sgOaWithdrawalMode: '__proto__' }).sgOaWithdrawalMode === 'withdraw', 'OA choice and end age survive saving, and invalid imported choices use the default');
+      const retainedOa = calculateRetirement({ ...defaults.sg, monthly: 8000, months: 15, retirementCurrentAge: 53, retirementStopAge: 54, retirementAge: 65, sgOaRetained: 100, sgRetirementSum: 1e6 });
+      const expectedAt55 = 37740 * (.3108 * 1.04 + .4055 * 1.025);
+      console.assert(Math.abs(retainedOa.raBalance - expectedAt55 * 1.04 ** 10) < .01, 'Retained OA earns 2.5% before transfer, while SA and RA earn 4%');
+      const interestChina = calculateRetirement({ ...defaults.cn, monthly: 10000, cnSocialMin: 0, retirementCurrentAge: 49, retirementStopAge: 50, retirementAge: 60, cnPastPensionYears: 19 });
+      console.assert(interestChina.balanceAtStop === 9600 && Math.abs(interestChina.balance - 9600 * 1.015 ** 10) < .01 && interestChina.annual > 0, 'China account keeps earning 1.5% after contributions stop, and qualifying service gets a pension');
+      console.assert(Math.abs(.6217 * 2.5 + (.1621 + .2162) * 4 - 3.06745) < .00001, 'Whole-CPF blended base rate at age 35 and below is about 3.1%');
+      for (const location of ['sg', 'cn']) {
+        const legacy = normalizeOffer({ location, monthly: 8000, housingCost: 1000, retirementCurrentAge: 25, retirementStopAge: 40, retirementAge: 65, retirementGrowth: 5.25, sgRetirementInflation: 2, sgCpfLifeMonthly: 2000 });
+        console.assert(legacy.retirementGrowth === defaults[location].retirementGrowth && legacy.retirementInterestModel === 'nominal' && !('sgRetirementInflation' in legacy), `${location}: legacy real growth migrates to simple interest defaults`);
+        console.assert(legacy.monthly === 8000 && legacy.housingCost === 1000 && legacy.retirementCurrentAge === 25 && legacy.retirementStopAge === 40 && legacy.sgCpfLifeMonthly === 2000, `${location}: migration preserves pay, costs, work period and custom pension quotes`);
+        console.assert(calculateRetirement({ ...defaults[location], retirementGrowth: -1 }).reason === 'retirementInputError', `${location}: negative nominal interest is rejected`);
+      }
+      console.assert(calculateRetirement({ ...defaults.sg, sgCpfPortion: 'oa' }).annual === earlyCpf.annual, 'Choosing housing-only for current compensation does not alter retirement savings');
+      for (const location of ['sg', 'cn']) {
+        console.assert(calculateRetirement({ ...defaults[location], retirementStopAge: 24 }).reason === 'retirementAgeError' && calculateRetirement({ ...defaults[location], retirementStopAge: 71 }).reason === 'retirementAgeError', `${location}: invalid work periods are rejected`);
+        const restored = normalizeOffer(JSON.parse(JSON.stringify(defaults[location])));
+        console.assert(restored.retirementCurrentAge === 25 && restored.retirementStopAge === 50, `${location}: work-period defaults survive save and import`);
+      }
+      console.assert(normalizeOffer({ location: 'sg', sgCpfLifeMonthly: 2000 }).sgCpfPayoutMode === 'manual', 'Existing user-entered CPF LIFE estimates retain manual mode');
+      console.assert(normalizeOffer({ location: 'sg', retirementCurrentAge: 30, retirementAge: 65, sgCpfLifeMonthly: 2000 }).retirementStopAge === 65, 'Older saved projections retain their original working period and manual estimate');
+      const negativeBar = barPosition(-50, -50, 150), positiveBar = barPosition(150, -50, 150);
+      console.assert(negativeBar.left === 0 && negativeBar.width === 25 && negativeBar.zero === 25 && positiveBar.left === 25 && positiveBar.width === 75, 'Negative and positive cash bars share a zero axis');
+      console.assert(barPosition(0, 0, 0).width === 0 && barPosition(-100, -100, 0).width === 100, 'Zero and all-negative chart ranges');
+      console.assert(percentDifference(100, 0, false) === '—' && percentDifference(-100, -200, false) === '—', 'No misleading percentage against a non-positive baseline');
       for (const location of ['sg', 'cn']) {
         const offer = { ...defaults[location], housingCost: 1000, housingAllowance: 200, foodCost: 150 };
         const base = calculate(offer);
@@ -562,7 +1134,7 @@
     if (savedState?.settings) {
       if (Number(savedState.settings.fx) > 0) document.getElementById('fx').value = Number(savedState.settings.fx);
       if (['CNY', 'SGD'].includes(savedState.settings.displayCurrency)) document.getElementById('display-currency').value = savedState.settings.displayCurrency;
-      if (['adjustedTakeHome', 'takeHome', 'adjustedTotalValue'].includes(savedState.settings.compareMetric)) document.getElementById('compare-metric').value = savedState.settings.compareMetric;
+      document.getElementById('compare-metric').value = normalizeMetric(savedState.settings.compareMetric);
     }
     applyTranslations();
     selfTest();
